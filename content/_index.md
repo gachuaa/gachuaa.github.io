@@ -1,4 +1,5 @@
 ---
+description: "Machine write-ups, web security, Linux, and networking notes by Gachuaa."
 menu:
     main:
         name: Home
@@ -6,3 +7,5 @@ menu:
         params:
             icon: home
 ---
+
+Machine write-ups, useful commands, and lessons from figuring things out.

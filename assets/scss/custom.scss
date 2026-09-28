@@ -1,3 +1,108 @@
-/*
-    You can add your own custom styles here.
-*/
+/* Personal styling layered on top of Stack. */
+:root {
+    --body-background: #f2f5f8;
+    --accent-color: #315f94;
+    --accent-color-darker: #244b79;
+    --body-text-color: #566373;
+    --card-text-color-main: #1e2b3c;
+    --card-text-color-secondary: #5c6979;
+    --card-text-color-tertiary: #647286;
+    --card-border-radius: 14px;
+    --link-background-color: 125, 163, 211;
+    --link-background-opacity: .16;
+    --link-background-opacity-hover: .28;
+    --section-separation: 28px;
+    --article-line-height: 1.85;
+
+    &[data-scheme="dark"] {
+        --body-background: #141c26;
+        --card-background: #1d2835;
+        --card-background-selected: #29384a;
+        --accent-color: #9bc4f0;
+        --accent-color-darker: #bfdcff;
+        --accent-color-text: #152336;
+        --body-text-color: #adbbca;
+        --card-text-color-main: #e7edf5;
+        --card-text-color-secondary: #b2c0d1;
+        --card-text-color-tertiary: #a3b2c5;
+        --card-separator-color: #334255;
+        --blockquote-background-color: #243244;
+        --code-background-color: #14202e;
+        --code-text-color: #dbe9f7;
+        --table-border-color: #3b4b61;
+        --tr-even-background-color: #223043;
+    }
+}
+
+.blog-intro {
+    margin: 0 0 var(--section-separation);
+    padding: 32px var(--card-padding);
+    border-radius: var(--card-border-radius);
+    border: 1px solid var(--card-separator-color);
+    background: var(--card-background);
+    box-shadow: var(--shadow-l1);
+
+    .blog-intro-label {
+        margin: 0 0 12px;
+        font-size: 1.1rem;
+        font-weight: 700;
+        letter-spacing: .13em;
+        color: var(--accent-color);
+    }
+
+    h2 {
+        margin: 0;
+        font-size: clamp(2.6rem, 3vw, 3.6rem);
+        line-height: 1.2;
+        letter-spacing: -.025em;
+        color: var(--card-text-color-main);
+    }
+
+    .blog-intro-description {
+        max-width: 48ch;
+        font-size: 1.6rem;
+        line-height: 1.75;
+        color: var(--card-text-color-secondary);
+    }
+
+    .topic-links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 24px;
+
+        a {
+            padding: 8px 12px;
+            border: 1px solid var(--card-separator-color);
+            border-radius: 8px;
+            color: var(--accent-color);
+            font-size: 1.25rem;
+            line-height: 1.5;
+        }
+
+        a:hover {
+            background: var(--card-background-selected);
+        }
+    }
+}
+
+.article-content .highlight,
+.article-content pre {
+    font-size: 1.35rem;
+    line-height: 1.7;
+}
+
+.article-content .copyCodeButton:focus-visible {
+    opacity: 1;
+}
+
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 4px;
+}
+
+@media (max-width: 767px) {
+    .blog-intro { padding: 24px 20px; }
+}

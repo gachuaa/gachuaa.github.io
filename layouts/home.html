@@ -1,0 +1,27 @@
+{{ define "main" }}
+    {{- $paginator := partial "helper/paginator.html" . -}}
+    {{ if not $paginator.HasPrev }}
+    <section class="blog-intro" aria-labelledby="blog-intro-title">
+        <p class="blog-intro-label">GACHUAA / CYBERSECURITY NOTES</p>
+        <h2 id="blog-intro-title">Notes from the lab.</h2>
+        <div class="blog-intro-description">{{ .Content }}</div>
+        <nav class="topic-links" aria-label="Browse topics">
+            {{ range hugo.Data.topics }}
+            <a href="{{ .path | relURL }}">{{ .name }}</a>
+            {{ end }}
+        </nav>
+    </section>
+    {{ end }}
+
+    <section class="article-list" aria-label="Latest posts">
+        {{ range $paginator.Pages }}
+            {{ partial "article-list/default" . }}
+        {{ end }}
+    </section>
+    {{- partial "pagination.html" . -}}
+    {{- partial "footer/footer" . -}}
+{{ end }}
+
+{{ define "right-sidebar" }}
+    {{ partial "sidebar/right.html" (dict "Context" . "Scope" "homepage") }}
+{{ end }}

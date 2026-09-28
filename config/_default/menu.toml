@@ -1,24 +1,14 @@
-# Configure main menu and social menu
-#[[main]]
-#identifier = "home"
-#name = "Home"
-#url = "/"
-#[main.params]
-#icon = "home"
-#newtab = true
-
+# Main navigation is defined in each page's front matter.
 [[social]]
     identifier = "github"
     name       = "GitHub"
-    url        = "https://github.com/CaiJimmy/hugo-theme-stack"
-
+    url        = "https://github.com/gachuaa"
     [social.params]
         icon = "brand-github"
 
 [[social]]
-    identifier = "twitter"
-    name       = "Twitter"
-    url        = "https://twitter.com"
-
+    identifier = "rss"
+    name       = "RSS feed"
+    url        = "/index.xml"
     [social.params]
-        icon = "brand-twitter"
+        icon = "rss"
