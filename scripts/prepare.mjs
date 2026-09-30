@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
-import { validate, references, processor, localTarget, withBase, markdownText, digest, walk } from '../src/lib/model.mjs';
+import { validate, references, readCanvas, canvasFileTarget, processor, localTarget, withBase, markdownText, digest, walk } from '../src/lib/model.mjs';
 
 function writeChanged(file,content) {
   fs.mkdirSync(path.dirname(file),{recursive:true});
@@ -17,21 +17,45 @@ export async function prepare(root=process.cwd(),dev=false) {
   for(const type of ['notes','writeups','articles']) fs.mkdirSync(path.join(generated,type),{recursive:true});
   for(const entry of selected) {
     const {tree,result}=references(entry.body);
-    for(const ref of result) {
+    const writeAsset=(bytes,ext)=>{
+      const asset=`${entry.type}/${entry.data.slug}/${digest(bytes)}${ext}`;
+      const dest=path.join(media,asset);writeChanged(dest,bytes);keep.add(dest);
+      return withBase(`/_content/${asset}`,site.base);
+    };
+    const copyAsset=async(file)=>{
+      let bytes=fs.readFileSync(file),ext=path.extname(file).toLowerCase();
+      if(['.png','.jpg','.jpeg','.webp'].includes(ext)) {
+        bytes=await sharp(bytes).rotate().resize({width:1920,withoutEnlargement:true}).webp({quality:92}).toBuffer();ext='.webp';
+      }
+      return writeAsset(bytes,ext);
+    };
+    const prepareCanvas=async(target)=>{
+      const canvas=readCanvas(target);
+      for(const node of canvas.nodes) if(node.type==='file'&&typeof node.file==='string'&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(node.file)) {
+        node.file=await copyAsset(canvasFileTarget(entry,target,node.file,root));
+      }
+      return writeAsset(Buffer.from(JSON.stringify(canvas)),'.canvas');
+    };
+    let canvasUrl='';
+    const refs=entry.data.canvas?[...result,{url:entry.data.canvas,canvas:true,sidecar:true}]:result;
+    for(const ref of refs) {
       const url=ref.url;
       if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) continue;
       if(url.startsWith('/')) {ref.node.url=withBase(url,site.base);continue;}
       const target=localTarget(entry,url),suffix=url.match(/[?#].*$/)?.[0]||'';
       if(target.endsWith('.md')) {ref.node.url=withBase(targets.get(target).route,site.base)+suffix;continue;}
+      if(ref.canvas) {
+        canvasUrl=await prepareCanvas(target);
+        if(!ref.sidecar)ref.node.value=`<div class="canvas-board" data-canvas-src="${canvasUrl}"></div>`;
+        continue;
+      }
       let bytes=fs.readFileSync(target),ext=path.extname(target).toLowerCase();
       if(ref.image && ['.png','.jpg','.jpeg','.webp'].includes(ext)) {
         bytes=await sharp(bytes).rotate().resize({width:1920,withoutEnlargement:true}).webp({quality:92}).toBuffer();ext='.webp';
       }
-      const asset=`${entry.type}/${entry.data.slug}/${digest(bytes)}${ext}`;
-      const dest=path.join(media,asset);writeChanged(dest,bytes);keep.add(dest);
-      ref.node.url=withBase(`/_content/${asset}`,site.base)+suffix;
+      ref.node.url=writeAsset(bytes,ext)+suffix;
     }
-    const meta={...entry.data,draft:entry.draft,type:entry.type,sourcePath:entry.sourcePath,sourceUrl:withBase(`/_source/${entry.type}/${entry.data.slug}.md`,site.base),folders:entry.folders,folderLabels:entry.folderLabels,platform:entry.platform||'',minutes:Math.max(1,Math.ceil(entry.body.split(/\s+/).length/220))};
+    const meta={...entry.data,canvasUrl,draft:entry.draft,type:entry.type,sourcePath:entry.sourcePath,sourceUrl:withBase(`/_source/${entry.type}/${entry.data.slug}.md`,site.base),folders:entry.folders,folderLabels:entry.folderLabels,platform:entry.platform||'',minutes:Math.max(1,Math.ceil(entry.body.split(/\s+/).length/220))};
     const dest=path.join(generated,entry.type,`${entry.data.slug}.md`);
     const preparedMarkdown=markdownText(meta,processor.stringify(tree));
     writeChanged(dest,preparedMarkdown);keep.add(dest);

@@ -67,7 +67,7 @@ export function getSources(root = process.cwd()) {
         const meta = path.join(base,...folders.slice(0,i+1),'_folder.yml');
         return fs.existsSync(meta) ? readYaml(meta).label || pretty(id) : pretty(id);
       });
-      entries.push({ type, file, sourcePath:path.relative(root,file).split(path.sep).join('/'), body, data, folders, folderLabels, platform:type==='writeups'?folders[0]:undefined, route:`/${PREFIX[type]}/${data.slug}/`, draft:data.draft !== false });
+      entries.push({ type, file, sourcePath:path.relative(root,file).split(path.sep).join('/'), body, data, folders, folderLabels, platform:type==='writeups'?(data.platform||folders[0]):undefined, route:`/${PREFIX[type]}/${data.slug}/`, draft:data.draft !== false });
     }
   }
   return entries;
@@ -83,12 +83,40 @@ export function references(body) {
       if (def) result.push({url:def.url,image:n.type==='imageReference',node:def});
     }
   });
+  visit(tree,'text',(node,index,parent)=>{
+    if(!parent||index===undefined)return;
+    const matches=[...node.value.matchAll(/!\[\[([^\]\r\n]+\.canvas)\]\]/gi)];
+    if(!matches.length)return;
+    const children=[];let cursor=0;
+    for(const match of matches){
+      if(match.index>cursor)children.push({type:'text',value:node.value.slice(cursor,match.index)});
+      const embed={type:'html',value:'<div class="canvas-board" data-canvas-src=""></div>'};
+      children.push(embed);result.push({url:match[1],image:true,canvas:true,node:embed});
+      cursor=match.index+match[0].length;
+    }
+    if(cursor<node.value.length)children.push({type:'text',value:node.value.slice(cursor)});
+    parent.children.splice(index,1,...children);
+  });
   return {tree,result};
+}
+export function readCanvas(file) {
+  const canvas=JSON.parse(fs.readFileSync(file,'utf8'));
+  if(!canvas||!Array.isArray(canvas.nodes)||!Array.isArray(canvas.edges)) throw new Error(`${file}: expected an Obsidian Canvas with nodes and edges arrays.`);
+  return canvas;
 }
 export function localTarget(entry,url) {
   let pathname;
   try { pathname=decodeURIComponent(url.split(/[?#]/)[0]); } catch {throw new Error(`${entry.sourcePath}: invalid link encoding: ${url}`);}
   return path.resolve(path.dirname(entry.file),pathname);
+}
+export function canvasFileTarget(entry,canvasFile,url,root=process.cwd()) {
+  let pathname;
+  try {pathname=decodeURIComponent(url);} catch {throw new Error(`${entry.sourcePath}: invalid Canvas file encoding: ${url}`);}
+  const variants=[pathname,pathname.replace(/(^|\/)images(?=\/|$)/g,'$1image')];
+  const bases=[path.dirname(canvasFile),path.join(root,'content'),root];
+  const directory=path.dirname(entry.file),candidates=[...new Set(bases.flatMap(base=>variants.map(value=>path.resolve(base,value))))];
+  const safe=candidates.filter(file=>file.startsWith(directory+path.sep));
+  return safe.find(file=>fs.existsSync(file)&&fs.statSync(file).isFile())||safe[0]||path.resolve(path.dirname(canvasFile),pathname);
 }
 export function validate(root = process.cwd()) {
   const {site,taxonomy} = readConfig(root), entries=getSources(root), errors=[];
@@ -115,6 +143,7 @@ export function validate(root = process.cwd()) {
     const d=entry.data, prefix=entry.sourcePath;
     if(typeof d.title!=='string'||!d.title.trim()) fail(`${prefix}: title is required.`);
     if(!validId(d.slug)) fail(`${prefix}: slug must contain lowercase words separated by hyphens.`);
+    if(d.canvas!==undefined&&(typeof d.canvas!=='string'||!d.canvas.toLowerCase().endsWith('.canvas')||/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(d.canvas))) fail(`${prefix}: canvas must be a local .canvas file inside the entry folder.`);
     const key=`${entry.type}/${d.slug}`;
     if(seenSlugs.has(key)) fail(`${prefix}: duplicate slug ${d.slug}.`);
     seenSlugs.add(key);routes.add(entry.route);
@@ -142,7 +171,9 @@ export function validate(root = process.cwd()) {
       if(routes.has(alias)) fail(`${entry.sourcePath}: alias collision ${alias}.`);
       routes.add(alias);
     }
-    for(const ref of references(entry.body).result) {
+    const refs=references(entry.body).result;
+    if(typeof entry.data.canvas==='string')refs.push({url:entry.data.canvas,canvas:true,sidecar:true});
+    for(const ref of refs) {
       const url=ref.url;
       if(/^(?:javascript|data|vbscript):/i.test(url)) {fail(`${entry.sourcePath}: unsupported URL scheme ${url.split(':')[0]}.`);continue;}
       if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) continue;
@@ -159,6 +190,16 @@ export function validate(root = process.cwd()) {
         if(!found) fail(`${entry.sourcePath}: link does not point to a content entry: ${url}.`);
         else if(!entry.draft&&found.draft) fail(`${entry.sourcePath}: public content links to draft ${found.sourcePath}.`);
       } else if(!target.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep attachments inside their own entry folder: ${url}.`);
+      if(ref.canvas) {
+        let canvas;
+        try {canvas=readCanvas(target);} catch(error) {fail(`${entry.sourcePath}: ${error.message}`);continue;}
+        for(const node of canvas.nodes) if(node.type==='file'&&typeof node.file==='string'&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(node.file)) {
+          let file;
+          try {file=canvasFileTarget(entry,target,node.file,root);} catch(error) {fail(error.message);continue;}
+          if(!file.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep Canvas attachments inside their own entry folder: ${node.file}.`);
+          else if(!fs.existsSync(file)||!fs.statSync(file).isFile()) fail(`${entry.sourcePath}: missing Canvas attachment ${node.file}.`);
+        }
+      }
     }
   }
   if(errors.length) throw new Error(errors.join('\n'));

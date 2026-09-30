@@ -4,12 +4,13 @@ import Icon from './Icon.astro';
 import Toc from './Toc.astro';
 import NotesTree from './NotesTree.astro';
 import MarkdownViewer from './MarkdownViewer.astro';
+import CanvasBoard from './CanvasBoard.astro';
 import {entryUrl,formatDate,topicLabel,typeLabel,relatedEntries,url,taxonomy,expandedTopics} from '../lib/content';
 const {entry,all}=Astro.props;
 const {Content,headings}=await render(entry),d=entry.data,note=d.type==='notes';
 const related=relatedEntries(entry,all);
 ---
-<div class:list={['page',{'note-page':note}]}><div class:list={{'note-grid':note,'reading-grid':!note}}>
+<div class:list={['page',{'note-page':note}]}><div class:list={{'note-grid':note,'reading-grid':!note}} data-entry-views>
  {note&&<aside class="note-reader-tree sticky-panel"><NotesTree entries={all} current={entry.id}/></aside>}
  <article class="reading-article">
   <div class="reading-controls" data-pagefind-ignore><button class="button toc-button" data-open="toc-dialog"><Icon name="menu" size={17}/> Contents</button>{note&&<button class="button tree-button" data-open="tree-dialog"><Icon name="folder" size={17}/> Notes tree</button>}</div>
@@ -19,13 +20,22 @@ const related=relatedEntries(entry,all);
    <h1 data-pagefind-meta="title">{d.title}</h1>
    <span class="sr-only" data-pagefind-filter="type">{d.type}</span><span class="sr-only" data-pagefind-meta="kind">{typeLabel(d.type)}</span>{expandedTopics(d.topics).map(id=><span class="sr-only" data-pagefind-filter="topic">{id}</span>)}
    <div class="article-meta" data-pagefind-ignore>{d.publishedAt&&<time datetime={d.publishedAt}>Published {formatDate(d.publishedAt)}</time>}{d.updatedAt&&<time datetime={d.updatedAt}>Updated {formatDate(d.updatedAt)}</time>}<span>{d.minutes} min read</span>{d.difficulty&&<span>{d.difficulty}</span>}<div class="entry-topics">{d.topics.slice(0,3).map((id:string)=><a href={url(`/topics/${id}/`)}>{topicLabel(id)}</a>)}</div></div>
-    <MarkdownViewer Content={Content}/>
+    {d.canvasUrl&&<div class="entry-view-tabs" role="tablist" aria-label="Entry views" data-pagefind-ignore>
+      <button id="markdown-tab" class="entry-view-tab" type="button" role="tab" aria-selected="true" aria-controls="markdown-panel" tabindex="0" data-entry-tab="markdown">Markdown</button>
+      <button id="canvas-tab" class="entry-view-tab" type="button" role="tab" aria-selected="false" aria-controls="canvas-panel" tabindex="-1" data-entry-tab="canvas">Canvas</button>
+    </div>}
+    <section id="markdown-panel" class="entry-view-panel" role={d.canvasUrl?'tabpanel':undefined} aria-labelledby={d.canvasUrl?'markdown-tab':undefined} data-entry-panel="markdown">
+     <MarkdownViewer Content={Content}/>
+    </section>
   </div>
   {related.length>0&&<section class="related" data-pagefind-ignore><h2>Related reading</h2>{related.map((e:any)=><a href={entryUrl(e)}>{e.data.title}</a>)}</section>}
  </article>
  <aside class:list={['reading-side','sticky-panel',note?'note-reader-toc':'article-toc']}>
   <Toc headings={headings}/>
  </aside>
+ {d.canvasUrl&&<section id="canvas-panel" class="entry-view-panel canvas-wide-panel" role="tabpanel" aria-labelledby="canvas-tab" data-entry-panel="canvas" hidden>
+  <CanvasBoard src={d.canvasUrl}/>
+ </section>}
 </div></div>
 <dialog id="toc-dialog" class="drawer drawer-right" aria-label="On this page"><div class="dialog-heading"><strong>On this page</strong><button class="icon-button" data-close aria-label="Close contents"><Icon name="close"/></button></div><Toc headings={headings}/></dialog>
 {note&&<dialog id="tree-dialog" class="drawer drawer-right" aria-label="Notes tree"><div class="dialog-heading"><strong>Notes tree</strong><button class="icon-button" data-close aria-label="Close notes tree"><Icon name="close"/></button></div><NotesTree entries={all} current={entry.id}/></dialog>}

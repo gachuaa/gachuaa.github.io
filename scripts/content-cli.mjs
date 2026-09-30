@@ -12,7 +12,7 @@ async function choose(label,items){
   console.log(`\n${label}`);items.forEach((item,i)=>console.log(`  ${i+1}. ${item.label}`));
   while(true){const n=Number(await ask('Choose a number','1'));if(n>=1&&n<=items.length&&Number.isInteger(n))return items[n-1].value;console.log('Choose one of the listed numbers.');}
 }
-function help(){console.log(`\nContent commands\n\n  npm run new\n  npm run category\n  npm run publish:content\n\nNoninteractive examples:\n  npm run category -- --type folder --name "API Security"\n  npm run category -- --type topic --name Docker --parent linux\n  npm run new -- --type writeup --category vuln-labs --title "First lab" --description "My lab walkthrough" --topics web-security\n  npm run publish:content -- content/writeups/vuln-labs/first-lab/index.md\n\nNew entries are drafts. Publishing prepares local files; it never commits or pushes.\n`);}
+function help(){console.log(`\nContent commands\n\n  npm run new\n  npm run category\n  npm run publish:content\n\nNoninteractive examples:\n  npm run category -- --type folder --name "API Security"\n  npm run category -- --type topic --name Docker --parent linux\n  npm run new -- --type note --root --title "Amaterasu" --description "Lab notes" --topics linux --canvas\n  npm run new -- --type writeup --category offsec --title "Amaterasu" --description "My lab walkthrough" --topics linux --canvas\n  npm run publish:content -- content/writeups/first-lab/index.md\n\nNew entries are drafts. Publishing prepares local files; it never commits or pushes.\n`);}
 try {
   if(args.help){help();}
   else if(command==='category') {
@@ -30,9 +30,9 @@ try {
       options.category=await choose('Platform',[...Object.entries(taxonomy.platforms).map(([value,x])=>({value,label:x.label})),{value:'__new',label:'Create a new platform'}]);
       if(options.category==='__new'){options.categoryLabel=await ask('Platform name');options.category=slugify(options.categoryLabel);}
     }
-    if(type==='notes'&&!options.category){
+    if(type==='notes'&&!options.category&&!options.root){
       const folders=[...new Set(getSources(root).filter(x=>x.type==='notes').map(x=>x.folders.join('/')))].filter(Boolean);
-      options.category=await choose('Notes folder',[...folders.map(value=>({value,label:value})),{value:'__new',label:'Create a new folder'}]);
+      options.category=await choose('Notes folder',[{value:'',label:'Root level'},...folders.map(value=>({value,label:value})),{value:'__new',label:'Create a new folder'}]);
       if(options.category==='__new') {options.categoryLabel=await ask('Folder display name');const parent=await ask('Parent folder path (optional)');options.category=addCategory(root,{type:'folder',name:options.categoryLabel,parent});}
     }
     options.title??=await ask('Title');options.description??=await ask('One-sentence description');

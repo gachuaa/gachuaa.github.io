@@ -4,10 +4,10 @@
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --font-body: 1rem;
   --line-height: 1.65;
-  --reading-width: 100ch;
-  --sidebar-width: 12rem;
+  --reading-width: 110ch;
+  --sidebar-width: 15rem;
   --rail-width: 4.5rem;
-  --toc-width: 12.5rem;
+  --toc-width: 14.5rem;
   --tree-width: 16rem;
   --content-max: 110rem;
   --space-1: .25rem;
@@ -43,20 +43,20 @@
 }
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --bg: #111214;
-  --sidebar: #18191c;
-  --surface: #1c1d21;
-  --surface-hover: #26282d;
-  --text: #f5f5f7;
-  --muted: #b2b4b8;
-  --faint: #858991;
-  --line: #303238;
+  --bg: #1d1d1d;
+  --sidebar: #232222;
+  --surface: #232222;
+  --surface-hover: #2b2a2a;
+  --text: #fffefe;
+  --muted: #c4bfbd;
+  --faint: #928e8c;
+  --line: #3c3938;
   --accent: #0a84ff;
   --accent-soft: #18283d;
   --accent-contrast: #ffffff;
-  --code-bg: #15171b;
-  --warning-bg: #302817;
-  --warning-text: #f5d98e;
-  --overlay: rgb(0 0 0 / .72);
-  --shadow: 0 18px 56px rgb(0 0 0 / .48);
+  --code-bg: #232222;
+  --warning-bg: #332b1d;
+  --warning-text: #e8ca7d;
+  --overlay: rgb(13 9 8 / .72);
+  --shadow: 0 18px 56px rgb(0 0 0 / .4);
 }

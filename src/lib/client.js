@@ -42,9 +42,23 @@ function closeDialog(dialog) {
   if (dialog.id === 'search-dialog') suppressSearchFocusOnce = true;
   dialog.close();
 }
+function selectEntryView(tab) {
+  const views=tab.closest('[data-entry-views]');
+  if(!views)return;
+  views.querySelectorAll('[data-entry-tab]').forEach(item=>{
+    const selected=item===tab;
+    item.setAttribute('aria-selected',String(selected));
+    item.tabIndex=selected?0:-1;
+  });
+  views.querySelectorAll('[data-entry-panel]').forEach(panel=>{
+    panel.hidden=panel.dataset.entryPanel!==tab.dataset.entryTab;
+    if(!panel.hidden)panel.querySelector('.canvas-board')?.dispatchEvent(new Event('entry-view-shown'));
+  });
+}
 document.addEventListener('click', (event) => {
-  const target = event.target.closest?.('[data-open], [data-close], [data-focus], [data-collapse-all], [data-collapse-topics]');
+  const target = event.target.closest?.('[data-open], [data-close], [data-focus], [data-collapse-all], [data-collapse-topics], [data-entry-tab]');
   if (!target) return;
+  if (target.dataset.entryTab !== undefined) selectEntryView(target);
   if (target.dataset.open) document.getElementById(target.dataset.open)?.showModal?.();
   if (target.dataset.close !== undefined) closeDialog(target.closest('dialog'));
   if (target.dataset.focus !== undefined) {
@@ -58,6 +72,12 @@ document.addEventListener('click', (event) => {
     target.closest('.topic-groups')?.querySelectorAll('details').forEach((item) => { item.open = false; });
   }
 });
+document.querySelectorAll('[data-entry-tab]').forEach(tab=>tab.addEventListener('keydown',event=>{
+  if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
+  const tabs=[...tab.closest('[data-entry-views]').querySelectorAll('[data-entry-tab]')];
+  const index=tabs.indexOf(tab),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
+  event.preventDefault();tabs[next].focus();selectEntryView(tabs[next]);
+}));
 
 document.querySelectorAll('dialog').forEach((dialog) => {
   dialog.addEventListener('click', (event) => {
@@ -293,13 +313,28 @@ document.querySelector('[data-topic-lookup]')?.addEventListener('input', (event)
 // Highlight the section currently in view on reading pages.
 const tocLinks = [...document.querySelectorAll('[data-toc-link]')];
 const headings = tocLinks.map((link) => document.getElementById(link.dataset.tocLink)).filter(Boolean);
-if (tocLinks.length && 'IntersectionObserver' in window) {
-  const observer = new IntersectionObserver((items) => {
-    items.filter((item) => item.isIntersecting).forEach((item) => {
-      tocLinks.forEach((link) => link.setAttribute('aria-current', String(link.dataset.tocLink === item.target.id)));
-    });
-  }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
-  headings.forEach((heading) => observer.observe(heading));
+if (tocLinks.length) {
+  const updateToc=()=>{
+    let activeHeading=headings[0];
+    const threshold=Math.min(window.innerHeight*.25,180);
+    for(const heading of headings){
+      if(heading.getBoundingClientRect().top<=threshold)activeHeading=heading;
+      else break;
+    }
+    if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2)activeHeading=headings.at(-1);
+    if(!activeHeading)return;
+    const activeLink=tocLinks.find((link)=>link.dataset.tocLink===activeHeading.id);
+    if(!activeLink||activeLink.getAttribute('aria-current')==='true')return;
+    tocLinks.forEach((link)=>link.setAttribute('aria-current',String(link===activeLink)));
+    const panel=activeLink.closest('.sticky-panel');
+    if(!panel?.clientHeight)return;
+    const linkBounds=activeLink.getBoundingClientRect(),panelBounds=panel.getBoundingClientRect();
+    if(linkBounds.top<panelBounds.top)panel.scrollTop-=panelBounds.top-linkBounds.top;
+    else if(linkBounds.bottom>panelBounds.bottom)panel.scrollTop+=linkBounds.bottom-panelBounds.bottom;
+  };
+  window.addEventListener('scroll',updateToc,{passive:true});
+  window.addEventListener('resize',updateToc);
+  updateToc();
 }
 
 document.querySelectorAll('.prose pre').forEach((pre) => {

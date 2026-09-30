@@ -16,14 +16,26 @@ npm ci
 
 ## Content types and locations
 
-Each content entry lives in its own folder and has an `index.md` file:
+Each entry lives in its own directory. `index.md` holds its metadata and Markdown body; `image/` holds local media; and an optional same-name `.canvas` file holds its Obsidian Canvas:
 
 ```text
 content/
-  notes/<folder>/<entry-name>/index.md
-  writeups/<platform>/<entry-name>/index.md
-  articles/<entry-name>/index.md
+  notes/amaterasu/
+    index.md
+    amaterasu.canvas
+    image/
+      nmap.png
+  writeups/amaterasu/
+    index.md
+    amaterasu.canvas
+    image/
+      nmap.png
+  articles/http-request-anatomy/
+    index.md
+    image/
 ```
+
+Write-up `index.md` files include a registered `platform` ID such as `offsec`.
 
 The `slug` in frontmatter determines the public URL. The folder name is for organizing source files; it does not have to equal the slug.
 
@@ -33,15 +45,15 @@ The `slug` in frontmatter determines the public URL. The folder name is for orga
 
 ## Create content with the CLI
 
-The CLI creates a draft, generates the correct template, and creates a local `images/` folder for attachments. Drafts appear in local development but are not included in the production site.
+The CLI creates a draft, generates the correct template, and creates a local `image/` folder for attachments. Pass `--canvas` to also create a blank `<entry-name>.canvas` and associate it with the entry. Entries with a Canvas show Markdown and Canvas tabs. Drafts appear in local development but are not included in the production site.
 
 ### Note
 
 ```bash
-npm run new -- --type note --category web-security/reconnaissance --title "Virtual host discovery" --description "A workflow for identifying alternate HTTP hosts." --topics web-security,reconnaissance,http
+npm run new -- --type note --root --title "Amaterasu" --description "Lab notes." --topics linux --canvas
 ```
 
-`--category` is the Notes folder path. For a new folder, register it first:
+Use `--root` for a top-level note such as `content/notes/amaterasu/`. To place notes in the Notes tree, use `--category` for the folder path. For a new folder, register it first:
 
 ```bash
 npm run category -- --type folder --name "Reconnaissance" --parent web-security
@@ -51,10 +63,10 @@ Folder paths use lowercase hyphenated IDs. A top-level folder can be created wit
 
 ### Write-up
 
-Use a registered platform ID as the category. Existing platform IDs are in `config/taxonomy.yml`.
+Use a registered platform ID as the category. New write-up directories live directly under `content/writeups/`; the selected platform is stored in `index.md` frontmatter. Existing platform IDs are in `config/taxonomy.yml`.
 
 ```bash
-npm run new -- --type writeup --category htb --title "Example lab" --description "What this walkthrough demonstrates." --topics networking,nmap --difficulty easy --os Linux
+npm run new -- --type writeup --category offsec --title "Amaterasu" --description "What this walkthrough demonstrates." --topics linux,networking --difficulty easy --os Linux --canvas
 ```
 
 Supported difficulties are `easy`, `medium`, `hard`, and `insane`. `--os` and `--difficulty` are optional. To add a new platform:
@@ -92,6 +104,7 @@ Optional fields include:
 - `updatedAt`: date the entry was last updated.
 - `aliases`: old root-relative paths to redirect, each ending in `/`.
 - `difficulty` and `os`: write-up metadata.
+- `platform`: registered write-up platform ID, such as `offsec`.
 - `sourceUrl`: source/reference URL when relevant.
 - `order`: optional ordering value.
 
@@ -107,6 +120,26 @@ The supplied templates are starting outlines:
 
 Use standard Markdown and GitHub Flavored Markdown, including headings, lists, tables, links, and fenced code blocks. Keep notes focused; explain the evidence and reasoning in write-ups; structure longer topics as articles.
 
+### Associate an Obsidian Canvas
+
+Keep the entry's Markdown file for its title, topics, draft status, and prose. Place the exported `.canvas` file and any files used by its file nodes inside that entry's folder:
+
+```text
+content/writeups/amaterasu/
+  index.md
+  amaterasu.canvas
+  image/
+    nmap.png
+```
+
+Associate the board from `index.md` frontmatter:
+
+```yaml
+canvas: amaterasu.canvas
+```
+
+The entry page provides separate Markdown and Canvas tabs, so the board and write-up do not get duplicated in one long page. Canvas text, groups, links, edges, and local image/file nodes render in the Canvas tab. Put file-node attachments in `image/`; vault-root `images/` paths are mapped to that folder when possible. The legacy `![[board.canvas]]` syntax remains available when you intentionally want a board inline in the Markdown body.
+
 ### Link between entries
 
 Use a public path for a page on this site:
@@ -119,13 +152,13 @@ You can also link to a nearby Markdown file using a relative path. The build res
 
 ### Add images and other files
 
-The CLI creates an `images/` directory beside the entry's `index.md`. Put that entry's screenshots or diagrams there and link relatively:
+The CLI creates an `image/` directory beside the entry's `index.md`. Put that entry's screenshots or diagrams there and link relatively:
 
 ```markdown
-![Request and response flow](./images/request-flow.png)
+![Request and response flow](./image/request-flow.png)
 ```
 
-Keep attachments inside the entry folder. Local PNG, JPG, JPEG, and WebP images are optimized during the build. Files in `public/` are copied to the site unchanged; for example, `public/images/avatar.png` is available at `/images/avatar.png`.
+Keep attachments inside the entry folder. Existing `images/` folders continue to work, while new entries use `image/`. Local PNG, JPG, JPEG, and WebP images are optimized during the build. Files in `public/` are copied to the site unchanged; for example, `public/images/avatar.png` is available at `/images/avatar.png`.
 
 ## Preview, validate, and publish
 

@@ -4,6 +4,7 @@ import { z } from 'astro/zod';
 const dateField=z.preprocess((value)=>value instanceof Date?value.toISOString().slice(0,10):value,z.string().optional());
 const schema=z.object({
   title:z.string(),description:z.string().default(''),slug:z.string().optional(),
+  canvas:z.string().optional(),canvasUrl:z.string().optional(),
   draft:z.boolean().default(true),publishedAt:dateField,updatedAt:dateField,
   topics:z.array(z.string()).default([]),type:z.enum(['notes','writeups','articles']),
   folders:z.array(z.string()).default([]),folderLabels:z.array(z.string()).default([]),sourceUrl:z.string().optional(),

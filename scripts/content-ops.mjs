@@ -35,10 +35,12 @@ export function createEntry(root,options) {
   if(!options.title?.trim())throw new Error('A title is required.');
   let category='';
   if(type==='notes') {
-    category=folderId(options.category||'general');
+    category=options.category?folderId(options.category):'';
     const directory=path.join(root,'content/notes',category);fs.mkdirSync(directory,{recursive:true});
-    const meta=path.join(directory,'_folder.yml');
-    if(!fs.existsSync(meta))fs.writeFileSync(meta,stringify({label:options.categoryLabel||pretty(category.split('/').at(-1))}));
+    if(category) {
+      const meta=path.join(directory,'_folder.yml');
+      if(!fs.existsSync(meta))fs.writeFileSync(meta,stringify({label:options.categoryLabel||pretty(category.split('/').at(-1))}));
+    }
   }
   if(type==='writeups') category=addCategory(root,{type:'platform',name:options.categoryLabel||options.category||'Other',id:slugify(options.category||'other')});
   const entryName=slugify(options.title),slug=options.slug||(type==='writeups'?`${category}-${entryName}`:entryName);
@@ -47,14 +49,17 @@ export function createEntry(root,options) {
   const topics=Array.isArray(options.topics)?options.topics:String(options.topics||'').split(',').map(x=>x.trim()).filter(Boolean);
   const {taxonomy}=readConfig(root);
   for(const topic of topics)if(!taxonomy.topics[topic])throw new Error(`Unknown topic ${topic}. Add it first with npm run category.`);
-  const directory=path.join(root,'content',type,category,entryName||slug),file=path.join(directory,'index.md');
+  const directory=type==='writeups'?path.join(root,'content/writeups',entryName||slug):path.join(root,'content',type,category,entryName||slug),file=path.join(directory,'index.md');
   if(fs.existsSync(file))throw new Error(`Entry folder already exists: ${path.relative(root,directory)}.`);
-  const data={title:options.title.trim(),description:options.description||'',slug,topics,draft:true};
+  const canvasFile=path.join(directory,`${entryName||slug}.canvas`);
+  if(options.canvas&&fs.existsSync(canvasFile))throw new Error(`Canvas file already exists: ${path.relative(root,canvasFile)}.`);
+  const data={title:options.title.trim(),description:options.description||'',slug,topics,draft:true,...(type==='writeups'?{platform:category}:{}),...(options.canvas?{canvas:`${entryName||slug}.canvas`}:{})};
   if(options.difficulty)data.difficulty=options.difficulty;
   if(options.os)data.os=options.os;
   const template=fs.readFileSync(path.join(root,'templates',`${{notes:'note',writeups:'writeup',articles:'article'}[type]}.md`),'utf8');
-  fs.mkdirSync(directory,{recursive:true});fs.mkdirSync(path.join(directory,'images'),{recursive:true});
+  fs.mkdirSync(directory,{recursive:true});fs.mkdirSync(path.join(directory,'image'),{recursive:true});
   fs.writeFileSync(file,markdownText(data,template));
+  if(options.canvas)fs.writeFileSync(canvasFile,`${JSON.stringify({nodes:[],edges:[]},null,2)}\n`);
   try{validate(root);}catch(error){fs.rmSync(directory,{recursive:true,force:true});throw error;}
   return file;
 }
