@@ -1,4 +1,7 @@
-public
+public/*
+!public/favicon.svg
+!public/images/
+!public/images/**
 resources
 .hugo_build.lock
 .DS_Store
