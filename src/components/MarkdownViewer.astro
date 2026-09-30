@@ -1,0 +1,10 @@
+---
+import Icon from './Icon.astro';
+const {Content}=Astro.props;
+---
+<div class="markdown-viewer" data-markdown-viewer>
+  <div class="markdown-toolbar" data-pagefind-ignore>
+    <span class="markdown-label"><Icon name="file" size={16}/> Markdown</span>
+  </div>
+  <div class="prose"><Content/></div>
+</div>

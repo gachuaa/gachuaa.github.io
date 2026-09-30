@@ -1,9 +1,0 @@
-<section class="widget tagCloud">
-    <div class="widget-icon">{{ partial "helper/icon" "categories" }}</div>
-    <h2 class="widget-title section-title"><a href="{{ "/categories/" | relURL }}">Topics</a></h2>
-    <div class="tagCloud-tags">
-        {{ range hugo.Data.topics }}
-        <a href="{{ .path | relURL }}">{{ .name }}</a>
-        {{ end }}
-    </div>
-</section>

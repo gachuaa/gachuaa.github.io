@@ -1,0 +1,6 @@
+---
+import {url} from '../lib/content';
+const {active='all',filter=false}=Astro.props;
+const types=[['all','All','/'],['articles','Articles','/articles/'],['writeups','Write-ups','/write-ups/'],['notes','Notes','/notes/']];
+---
+<nav class="type-tabs" aria-label="Content types">{types.map(([value,label,href])=>filter?<button data-type-filter={value} aria-pressed={value===active}>{label}</button>:<a href={url(href)} aria-current={value===active?'page':undefined}>{label}</a>)}</nav>

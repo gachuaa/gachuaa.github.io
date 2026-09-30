@@ -1,0 +1,12 @@
+---
+import Icon from './Icon.astro';
+import TreeNode from './TreeNode.astro';
+const {entries=[],current=''}=Astro.props;
+const root:any={children:new Map(),entries:[]};
+for(const entry of entries.filter((e:any)=>e.data.type==='notes')){
+ let node=root;
+ entry.data.folders.forEach((id:string,i:number)=>{if(!node.children.has(id))node.children.set(id,{id,label:entry.data.folderLabels[i]||id,children:new Map(),entries:[]});node=node.children.get(id);});
+ node.entries.push(entry);
+}
+---
+<nav class="notes-tree" aria-label="Notes tree"><h2>Notes tree</h2><TreeNode node={root} current={current}/></nav>

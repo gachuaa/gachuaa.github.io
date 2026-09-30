@@ -1,0 +1,12 @@
+---
+import Icon from './Icon.astro';
+import {entryUrl} from '../lib/content';
+const {node,current='',depth=0}=Astro.props;
+const contains=(item:any):boolean=>item.entries.some((e:any)=>e.id===current)||[...item.children.values()].some((n:any)=>contains(n));
+const children=[...node.children.values()].sort((a:any,b:any)=>a.label.localeCompare(b.label));
+const entries=[...node.entries].sort((a:any,b:any)=>(a.data.order??999)-(b.data.order??999)||a.data.title.localeCompare(b.data.title));
+---
+<ul class:list={['tree-list',{nested:depth>0}]}>
+ {children.map((child:any,index:number)=><li><details open={current?contains(child):depth===0&&index===0}><summary><Icon name="chevron" size={14}/><Icon name="folder" size={18}/><span>{child.label}</span></summary><Astro.self node={child} current={current} depth={depth+1}/></details></li>)}
+ {entries.map((entry:any)=><li><a href={entryUrl(entry)} class:list={['tree-entry',{active:entry.id===current}]} aria-current={entry.id===current?'page':undefined}><Icon name="file" size={17}/><span>{entry.data.title}</span>{entry.data.draft&&<span class="draft-dot" title="Draft">D</span>}</a></li>)}
+</ul>

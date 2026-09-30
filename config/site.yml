@@ -1,0 +1,15 @@
+# Edit this file for your identity and GitHub Pages address.
+name: Gachuaa
+description: Wiki
+tagline: Security write-ups, practical notes.
+url: https://gachuaa.github.io
+# Keep / for USERNAME.github.io. For a project repo, use /REPOSITORY/.
+base: /
+timezone: Asia/Kolkata
+pageSize: 8
+socials:
+  github: https://github.com/gachuaa
+  linkedin: ""
+about: |
+  This is my personal collection of security write-ups, practical notes, and Linux setups.
+  I use it to record what worked, what I misunderstood, and what I want to remember.

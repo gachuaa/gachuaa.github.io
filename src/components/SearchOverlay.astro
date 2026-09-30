@@ -1,0 +1,19 @@
+---
+import Icon from './Icon.astro';
+import {url} from '../lib/content';
+---
+<dialog id="search-dialog" class="search-dialog" aria-label="Search the notebook">
+  <form class="search-dialog-form" action={url('/search/')} role="search" data-search-overlay-form>
+    <Icon name="search" size={19}/>
+    <input name="q" data-search-overlay-input aria-label="Search the notebook" placeholder="Search posts, pages, tags…" autocomplete="off"/>
+    <kbd>Esc</kbd>
+    <button class="icon-button search-close" type="button" data-close aria-label="Close search"><Icon name="close" size={18}/></button>
+  </form>
+  <div class="search-palette-filters" role="group" aria-label="Search in">
+    <button type="button" data-search-scope="posts" aria-pressed="true">Posts</button>
+    <button type="button" data-search-scope="tags" aria-pressed="false">Tags</button>
+  </div>
+  <div class="search-dialog-results" data-search-overlay-results>
+    <p class="search-panel-hint">Start typing to search the notebook.</p>
+  </div>
+</dialog>

@@ -1,0 +1,36 @@
+{
+  "name": "snipper-blog-template",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24.0.0 <25"
+  },
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "new": "node scripts/content-cli.mjs new",
+    "category": "node scripts/content-cli.mjs category",
+    "publish:content": "node scripts/content-cli.mjs publish",
+    "check": "node scripts/check-content.mjs",
+    "prebuild": "node scripts/prepare.mjs",
+    "build": "astro build && node scripts/build-search.mjs && node scripts/check-output.mjs",
+    "preview": "astro preview --host 0.0.0.0",
+    "test": "node --test tests/*.test.mjs",
+    "test:browser": "node tests/browser.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/inter": "5.3.0",
+    "astro": "7.3.5",
+    "chokidar": "5.0.0",
+    "github-slugger": "2.0.0",
+    "linkedom": "0.18.13",
+    "pagefind": "1.5.2",
+    "remark-gfm": "4.0.1",
+    "remark-parse": "11.0.0",
+    "remark-stringify": "11.0.0",
+    "sharp": "0.35.5",
+    "unified": "11.0.5",
+    "unist-util-visit": "5.1.0",
+    "yaml": "2.9.1"
+  }
+}
