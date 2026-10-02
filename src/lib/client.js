@@ -42,7 +42,7 @@ function closeDialog(dialog) {
   if (dialog.id === 'search-dialog') suppressSearchFocusOnce = true;
   dialog.close();
 }
-function selectEntryView(tab) {
+function selectEntryView(tab, syncLocation = false) {
   const views=tab.closest('[data-entry-views]');
   if(!views)return;
   views.querySelectorAll('[data-entry-tab]').forEach(item=>{
@@ -54,11 +54,23 @@ function selectEntryView(tab) {
     panel.hidden=panel.dataset.entryPanel!==tab.dataset.entryTab;
     if(!panel.hidden)panel.querySelector('.canvas-board')?.dispatchEvent(new Event('entry-view-shown'));
   });
+  if(syncLocation){
+    const hash=tab.dataset.entryTab==='canvas'?'#canvas':'';
+    const locationPath=`${location.pathname}${location.search}${hash}`;
+    if(`${location.pathname}${location.search}${location.hash}`!==locationPath)history.replaceState(null,'',locationPath);
+  }
 }
+function syncEntryViewToHash(){
+  const name=location.hash==='#canvas'?'canvas':'markdown';
+  const tab=document.querySelector(`[data-entry-tab="${name}"]`);
+  if(tab)selectEntryView(tab);
+}
+window.addEventListener('hashchange',syncEntryViewToHash);
+syncEntryViewToHash();
 document.addEventListener('click', (event) => {
   const target = event.target.closest?.('[data-open], [data-close], [data-focus], [data-collapse-all], [data-collapse-topics], [data-entry-tab]');
   if (!target) return;
-  if (target.dataset.entryTab !== undefined) selectEntryView(target);
+  if (target.dataset.entryTab !== undefined) selectEntryView(target,true);
   if (target.dataset.open) document.getElementById(target.dataset.open)?.showModal?.();
   if (target.dataset.close !== undefined) closeDialog(target.closest('dialog'));
   if (target.dataset.focus !== undefined) {
@@ -76,7 +88,7 @@ document.querySelectorAll('[data-entry-tab]').forEach(tab=>tab.addEventListener(
   if(!['ArrowLeft','ArrowRight','Home','End'].includes(event.key))return;
   const tabs=[...tab.closest('[data-entry-views]').querySelectorAll('[data-entry-tab]')];
   const index=tabs.indexOf(tab),next=event.key==='Home'?0:event.key==='End'?tabs.length-1:(index+(event.key==='ArrowRight'?1:-1)+tabs.length)%tabs.length;
-  event.preventDefault();tabs[next].focus();selectEntryView(tabs[next]);
+  event.preventDefault();tabs[next].focus();selectEntryView(tabs[next],true);
 }));
 
 document.querySelectorAll('dialog').forEach((dialog) => {

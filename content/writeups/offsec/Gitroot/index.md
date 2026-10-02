@@ -11,4 +11,4 @@ draft: false
 publishedAt: 2026-10-02
 ---
 # coming tommorow
-check [[gitroot.canvas]] now
+View the investigation board in the [Gitroot Canvas](/write-ups/gitroot/#canvas).
