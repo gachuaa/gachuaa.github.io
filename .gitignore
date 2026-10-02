@@ -12,6 +12,7 @@ public/search.json
 .DS_Store
 .obsidian/
 **/.obsidian/
+/content/.trash/
 test-results/
 playwright-report/
 *.log
