@@ -13,6 +13,7 @@ public/search.json
 .obsidian/
 **/.obsidian/
 /content/.trash/
+/content/testing/
 test-results/
 playwright-report/
 *.log
