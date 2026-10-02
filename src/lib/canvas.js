@@ -163,6 +163,7 @@ function renderBoard(container, canvas) {
   svg.append(defs);
 
   const byId = new Map(positioned.map((item) => [item.node.id, item]));
+  const edgeLabels = [];
   const getPoint = (item, side) => {
     const x = item.x + offsetX;
     const y = item.y + offsetY;
@@ -198,7 +199,29 @@ function renderBoard(container, canvas) {
     if (edge.toEnd && edge.toEnd !== 'none') path.setAttribute('marker-end', `url(#${marker.id})`);
     if (edge.fromEnd && edge.fromEnd !== 'none') path.setAttribute('marker-start', `url(#${marker.id})`);
     svg.append(path);
+    if (typeof edge.label === 'string' && edge.label.trim()) {
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      const midpoint = {
+        x: (start.x + 3 * c1.x + 3 * c2.x + end.x) / 8,
+        y: (start.y + 3 * c1.y + 3 * c2.y + end.y) / 8,
+      };
+      label.classList.add('canvas-edge-label');
+      label.setAttribute('x', String(midpoint.x));
+      label.setAttribute('y', String(midpoint.y));
+      label.setAttribute('text-anchor', 'middle');
+      label.setAttribute('dominant-baseline', 'central');
+      const lines = edge.label.split(/\r?\n/);
+      lines.forEach((line, index) => {
+        const span = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+        span.setAttribute('x', String(midpoint.x));
+        span.setAttribute('dy', index === 0 ? `${-.55 * (lines.length - 1)}em` : '1.1em');
+        span.textContent = line;
+        label.append(span);
+      });
+      edgeLabels.push(label);
+    }
   }
+  edgeLabels.forEach((label) => svg.append(label));
   stage.append(svg);
 
   const ordered = [...positioned].sort((a,b) => Number(a.node.type !== 'group') - Number(b.node.type !== 'group'));
