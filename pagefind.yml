@@ -1,0 +1,4 @@
+site: dist
+root_selector: "[data-pagefind-body]"
+exclude_selectors:
+  - "[data-pagefind-ignore]"

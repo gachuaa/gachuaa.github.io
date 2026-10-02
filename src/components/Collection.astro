@@ -1,0 +1,10 @@
+---
+import EntryRow from './EntryRow.astro';
+import {expandedTopics,site} from '../lib/content';
+const {entries,compact=false,limit=site.pageSize,paginate=true}=Astro.props;
+---
+<div data-collection data-limit={limit} data-pagination={paginate? 'true':'false'}>
+ <div data-collection-rows>{entries.map((entry:any)=><div class="filter-row" data-type={entry.data.type} data-difficulty={entry.data.difficulty||''} data-topics={expandedTopics(entry.data.topics).join(' ')}><EntryRow entry={entry} compact={compact}/></div>)}</div>
+ <p class="empty-state" data-empty hidden>No entries match these filters.</p>
+ {paginate&&<div class="collection-pagination pagination" data-collection-pagination hidden><button class="button" data-previous>Previous</button><span class="muted small" data-page-label></span><button class="button" data-next>Next</button></div>}
+</div>

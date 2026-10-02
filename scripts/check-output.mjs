@@ -1,0 +1,20 @@
+import fs from 'node:fs';
+import path from 'node:path';
+
+const root=process.cwd(),dist=path.join(root,'dist'),site=fs.existsSync(path.join(dist,'client'))?path.join(dist,'client'):dist;
+const required=['index.html','notes/index.html','write-ups/index.html','topics/index.html','archives/index.html','about/index.html','search/index.html','rss.xml','sitemap.xml','robots.txt','search.json'];
+const missing=required.filter(file=>!fs.existsSync(path.join(site,file)));
+if(missing.length) throw new Error(`Build output is missing: ${missing.join(', ')}`);
+const htmlFiles=[];
+const walk=(directory)=>fs.readdirSync(directory,{withFileTypes:true}).flatMap((item)=>{const full=path.join(directory,item.name);return item.isDirectory()?walk(full):[full];});
+for(const file of walk(site).filter(file=>file.endsWith('.html'))) htmlFiles.push(fs.readFileSync(file,'utf8'));
+const combined=htmlFiles.join('\n');
+if(!combined.includes('Notes from the lab')) throw new Error('Home page title was not rendered.');
+if(/Draft · visible in local preview only/.test(combined)) throw new Error('A draft entry leaked into the production build.');
+if(!combined.includes('data-theme-switch')) throw new Error('Theme controls were not rendered.');
+if(!combined.includes('search-dialog')) throw new Error('Search overlay was not rendered.');
+if(!combined.includes('Nothing here yet')) throw new Error('Empty-state messaging was not rendered.');
+const search=JSON.parse(fs.readFileSync(path.join(site,'search.json'),'utf8'));
+if(search.length&&!fs.existsSync(path.join(site,'pagefind/pagefind.js'))) throw new Error('Pagefind index is missing for published entries.');
+if(search.some(entry=>/(demo|sample|placeholder)/i.test(`${entry.title} ${entry.description}`))) throw new Error('Demo or placeholder content leaked into the production index.');
+console.log(`Output check passed: ${htmlFiles.length} HTML pages, search index, RSS, sitemap, and ${search.length?'Pagefind index':'empty-content search'} ready.`);

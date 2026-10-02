@@ -1,0 +1,17 @@
+---
+import {entryUrl,formatDate,topicLabel,typeLabel,url} from '../lib/content';
+const {entry}=Astro.props;
+const d=entry.data;
+---
+<article class="entry-tile">
+  <h2><a href={entryUrl(entry)}>{d.title}</a></h2>
+  <p>{d.description}</p>
+  <div class="entry-tile-footer">
+    <div class="entry-topics">{d.topics.slice(0,3).map((id:string)=><a href={url(`/topics/${id}/`)}>{topicLabel(id)}</a>)}</div>
+    <div class="entry-tile-meta">
+      <span class="type-label">{typeLabel(d.type)}</span>
+      <time datetime={d.updatedAt||d.publishedAt}>{formatDate(d.updatedAt||d.publishedAt)}</time>
+      {d.minutes&&<span>{d.minutes} min</span>}
+    </div>
+  </div>
+</article>

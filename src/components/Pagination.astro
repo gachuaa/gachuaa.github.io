@@ -1,0 +1,7 @@
+---
+const {page=1,total=1,base='/'}=Astro.props;
+import {url} from '../lib/content';
+const href=(n:number)=>url(n===1?base:`${base}page/${n}/`);
+const range=Array.from({length:total},(_,i)=>i+1).filter(n=>n===1||n===total||Math.abs(n-page)<=1);
+---
+{total>1&&<nav class="pagination" aria-label="Pagination">{page>1&&<a href={href(page-1)} rel="prev">Previous</a>}{range.map((n,i)=><>{i>0&&n-range[i-1]>1&&<span aria-hidden="true">…</span>}<a href={href(n)} aria-current={n===page?'page':undefined} aria-label={`Page ${n}`}>{n}</a></>)}{page<total&&<a href={href(page+1)} rel="next">Next</a>}</nav>}

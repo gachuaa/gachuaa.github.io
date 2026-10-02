@@ -1,0 +1,21 @@
+---
+import Icon from './Icon.astro';
+import TypeTabs from './TypeTabs.astro';
+import Collection from './Collection.astro';
+import {url} from '../lib/content';
+const {all}=Astro.props;
+const entries=all.filter((e:any)=>e.data.publishedAt&&!e.data.draft);
+const years=[...new Set(entries.map((e:any)=>e.data.publishedAt.slice(0,4)))].sort().reverse();
+---
+<div class="page" data-filter-scope><header class="page-heading"><h1>Archives</h1><p>Everything, ordered by publication date.</p></header><TypeTabs filter/>
+ <div class="list-heading"><span class="muted small">Browse by year and month</span><button class="collapse-button" data-collapse-all>Collapse all</button></div>
+ {years.map((year:any,yi)=>{
+  const months=[...new Set(entries.filter((e:any)=>e.data.publishedAt.startsWith(year)).map((e:any)=>e.data.publishedAt.slice(0,7)))].sort().reverse();
+  return <details class="accordion" open={yi===0} data-archive-year><summary><Icon name="chevron" size={18}/>{year}<span class="count" data-year-count>{entries.filter((e:any)=>e.data.publishedAt.startsWith(year)).length}</span></summary>{months.map((month:any,mi)=>{
+   const items=entries.filter((e:any)=>e.data.publishedAt.startsWith(month));const label=new Date(`${month}-01T12:00:00Z`).toLocaleString('en',{month:'long',timeZone:'UTC'});
+   return <details class="archive-month filter-group" open={yi===0&&mi===0} data-filter-group><summary><Icon name="chevron" size={16}/>{label}<span class="count" data-group-count>{items.length}</span></summary><div class="archive-rows"><Collection entries={items} compact limit={6}/><a class="text-link" href={url(`/archives/${month.replace('-','/')}/`)}>Browse {label} {year}</a></div></details>;
+  })}</details>;
+ })}
+ {!entries.length&&<p class="empty-state">Published entries will appear here.</p>}
+ <p class="empty-state" data-scope-empty hidden>No entries of this type.</p>
+</div>

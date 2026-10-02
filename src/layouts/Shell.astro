@@ -1,0 +1,45 @@
+---
+import '@fontsource-variable/inter';
+import '../styles/theme.css';
+import '../styles/global.css';
+import Icon from '../components/Icon.astro';
+import Navigation from '../components/Navigation.astro';
+import SearchOverlay from '../components/SearchOverlay.astro';
+import {site,url} from '../lib/content';
+const {title,description=site.tagline,active='home',note=false,reading=false,draft=false,sidebarCollapsible=false,canonicalPath=Astro.url.pathname}=Astro.props;
+const canonical=new URL(canonicalPath,site.url).href;
+---
+<!doctype html>
+<html lang="en" data-theme="light">
+ <head>
+  <meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>{title?`${title} · ${site.name}`:site.name}</title><meta name="description" content={description}/>
+  <link rel="canonical" href={canonical}/><link rel="icon" href={url('/favicon.svg')} type="image/svg+xml"/>
+  <link rel="alternate" type="application/rss+xml" title={`${site.name} RSS`} href={url('/rss.xml')}/>
+  <meta property="og:title" content={title||site.name}/><meta property="og:description" content={description}/><meta property="og:type" content={reading?'article':'website'}/><meta property="og:url" content={canonical}/><meta name="twitter:card" content="summary"/>
+  {draft&&<meta name="robots" content="noindex,nofollow"/>}
+  <script is:inline>
+   (()=>{let preference='system';try{preference=localStorage.getItem('snipper-theme')||'system';}catch{}if(!['light','dark','system'].includes(preference))preference='system';document.documentElement.dataset.theme=preference==='system'?(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'):preference;document.documentElement.dataset.themePreference=preference;})();
+  </script>
+ </head>
+ <body class:list={{'note-mode':note,'reader-mode':reading,'sidebar-collapsible':sidebarCollapsible}} data-base={site.base}>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div class="shell">
+   <aside class="primary-sidebar" data-pagefind-ignore><Navigation active={active} compact={sidebarCollapsible}/></aside>
+   <div class="workspace">
+    <header class="topbar" data-pagefind-ignore>
+     <button type="button" class="back-button" data-go-back aria-label="Go back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/><path d="M9 12h10"/></svg></button>
+     <button class="icon-button mobile-menu" data-open="navigation-dialog" aria-label="Open navigation"><Icon name="menu"/></button>
+     <form class="global-search" action={url('/search/')} role="search" data-global-search-form><Icon name="search"/><input aria-label="Search posts and notes" name="q" placeholder="Search posts and notes…" autocomplete="off"/><kbd aria-hidden="true">Ctrl K</kbd></form>
+     {reading&&<button class="button focus-toggle" data-focus aria-pressed="false"><Icon name="focus" size={17}/><span>Focus</span></button>}
+    </header>
+    <main id="main" tabindex="-1"><slot/></main>
+    <footer class="page-footer" data-pagefind-ignore><span>{site.name}</span><a href={url('/rss.xml')}>RSS</a><a href={url('/about/')}>About this notebook</a><a href="#main">Back to top</a></footer>
+   </div>
+  </div>
+  <SearchOverlay/>
+  <dialog id="navigation-dialog" class="drawer navigation-drawer" aria-label="Navigation"><div class="dialog-heading"><strong>Navigation</strong><button class="icon-button" data-close aria-label="Close navigation"><Icon name="close"/></button></div><Navigation active={active}/></dialog>
+  <slot name="dialogs"/>
+  <script>import '../lib/client';</script>
+ </body>
+</html>

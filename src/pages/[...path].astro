@@ -1,0 +1,41 @@
+---
+import Shell from '../layouts/Shell.astro';
+import Listing from '../components/Listing.astro';
+import Writeups from '../components/Writeups.astro';
+import Topics from '../components/Topics.astro';
+import Archives from '../components/Archives.astro';
+import Reader from '../components/Reader.astro';
+import Search from '../components/Search.astro';
+import Icon from '../components/Icon.astro';
+import {allEntries,site,taxonomy,topicEntries,entryUrl,url} from '../lib/content';
+export async function getStaticPaths(){
+ const all=await allEntries(),routes:any[]=[];
+ const add=(path:string,props:any)=>routes.push({params:{path:path||undefined},props:{...props,all}});
+ const paginate=(entries:any[],root:string,view:string,extra:any={})=>{const total=Math.max(1,Math.ceil(entries.length/site.pageSize));for(let page=1;page<=total;page++)add(page===1?root:`${root?root+'/':''}page/${page}`,{view,entries:entries.slice((page-1)*site.pageSize,page*site.pageSize),page,total,count:entries.length,base:root?`/${root}/`:'/',...extra});};
+ paginate(all,'','home');paginate(all.filter(e=>e.data.type==='articles'),'articles','articles');
+ const notes=all.filter(e=>e.data.type==='notes');
+ paginate([...notes].sort((a,b)=>(b.data.updatedAt||b.data.publishedAt||'9999').localeCompare(a.data.updatedAt||a.data.publishedAt||'9999')),'notes','notes');
+ paginate([...notes].sort((a,b)=>a.data.title.localeCompare(b.data.title)),'notes/all','notes',{alphabetical:true});
+ add('write-ups',{view:'writeups',entries:all.filter(e=>e.data.type==='writeups')});
+ for(const [id,platform] of Object.entries(taxonomy.platforms) as any){const entries=all.filter(e=>e.data.platform===id);if(entries.length)add(`write-ups/platform/${id}`,{view:'platform',entries,platformLabel:platform.label,count:entries.length,page:1,total:1,base:`/write-ups/platform/${id}/`});}
+ add('topics',{view:'topics'});for(const id of Object.keys(taxonomy.topics))if(topicEntries(all,id).length)add(`topics/${id}`,{view:'topics',topic:id});
+ add('archives',{view:'archives'});
+ const months=[...new Set(all.filter(e=>!e.data.draft&&e.data.publishedAt).map(e=>e.data.publishedAt.slice(0,7)))];
+ for(const month of months){const date=new Date(`${month}-01T12:00:00Z`);paginate(all.filter(e=>!e.data.draft&&e.data.publishedAt?.startsWith(month)),`archives/${month.replace('-','/')}`,'archive',{archiveLabel:date.toLocaleString('en',{month:'long',year:'numeric',timeZone:'UTC'})});}
+ for(const view of ['about','search'])add(view,{view});
+ for(const entry of all){add(entryUrl(entry).replace(site.base,'').replace(/^\/+|\/+$/g,''),{view:'reader',entry});for(const alias of entry.data.aliases||[])add(alias.replace(/^\/+|\/+$/g,''),{view:'redirect',entry});}
+ return routes;
+}
+const p=Astro.props as any,{view,all,entry}=p;
+const active=({home:'home',articles:'home',notes:'notes',platform:'writeups',writeups:'writeups',topics:'topics',archives:'archives',archive:'archives',about:'about',search:'',reader:entry?.data.type==='articles'?'home':entry?.data.type}[view]||'home');
+const title=entry?.data.title||({home:'Notes from the lab',articles:'Articles',notes:'Notes',platform:p.platformLabel,writeups:'Write-ups',topics:p.topic?taxonomy.topics[p.topic].label:'Topics',archives:'Archives',archive:p.archiveLabel,about:'About',search:'Search'}[view]);
+---
+{view==='redirect'?<html lang="en"><head><meta charset="UTF-8"/><meta http-equiv="refresh" content={`0;url=${entryUrl(entry)}`}/><link rel="canonical" href={new URL(entryUrl(entry),site.url).href}/><meta name="robots" content="noindex"/><title>Page moved</title></head><body><p>This page has moved to <a href={entryUrl(entry)}>{entry.data.title}</a>.</p></body></html>:<Shell title={title} description={entry?.data.description||site.tagline} active={active} reading={view==='reader'} note={view==='reader'&&entry.data.type==='notes'} draft={entry?.data.draft}>
+ {['home','articles','notes','platform','archive'].includes(view)&&<Listing {...p}/>}
+ {view==='writeups'&&<Writeups {...p}/>}
+ {view==='topics'&&<Topics {...p}/>}
+ {view==='archives'&&<Archives {...p}/>}
+ {view==='reader'&&<Reader {...p}/>}
+ {view==='search'&&<Search {...p}/>}
+ {view==='about'&&<div class="page about-page"><header class="page-heading"><h1>Hi, I'm {site.name}.</h1><p>Learning security by doing, then writing it down.</p></header><div class="about-intro">{site.about.split('\n').filter(Boolean).map((text:string)=><p>{text}</p>)}</div><section class="about-section"><h2>What you'll find here</h2><ul class="about-types">{[['file','Write-ups','Reasoning through practice labs.'],['notes','Notes','Short, connected technical references.'],['file','Articles','Setups, explanations, and lessons learned.']].map(([icon,label,text])=><li><Icon name={icon}/><div><strong>{label}</strong><span>{text}</span></div></li>)}</ul></section><section class="about-section"><h2>Around the web</h2><div class="social-buttons">{site.socials.github&&<a class="button" href={site.socials.github}><Icon name="github" size={18}/>GitHub</a>}{site.socials.linkedin&&<a class="button" href={site.socials.linkedin}><Icon name="linkedin" size={18}/>LinkedIn</a>}<a class="button" href={url('/rss.xml')}><Icon name="rss" size={18}/>RSS</a></div></section><section class="about-section"><h2>A living notebook</h2><p>Technical notes change as I learn. Each page shows when it was last updated.</p></section></div>}
+ </Shell>}

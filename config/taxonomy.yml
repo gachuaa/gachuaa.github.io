@@ -1,0 +1,39 @@
+topics:
+  web-security:
+    label: Web security
+  reconnaissance:
+    label: Reconnaissance
+    parent: web-security
+  http:
+    label: HTTP
+    parent: web-security
+  xss:
+    label: XSS
+    parent: web-security
+  authentication:
+    label: Authentication
+    parent: web-security
+  linux:
+    label: Linux
+  virtualization:
+    label: Virtualization
+    parent: linux
+  networking:
+    label: Networking
+  dns:
+    label: DNS
+    parent: networking
+  tools:
+    label: Tools
+  nmap:
+    label: Nmap
+    parent: tools
+platforms:
+  htb:
+    label: Hack The Box
+  thm:
+    label: TryHackMe
+  offsec:
+    label: OffSec
+  vuln-labs:
+    label: Vuln Labs

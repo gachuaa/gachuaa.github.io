@@ -1,0 +1,4 @@
+---
+const {headings=[],compact=false}=Astro.props;
+---
+<nav class="toc" aria-label="On this page"><h2>On this page</h2>{headings.length?<ul>{headings.filter((h:any)=>h.depth>=2&&h.depth<=3).map((h:any)=><li class:list={{nested:h.depth===3}}><a href={`#${h.slug}`} data-toc-link={h.slug}>{h.text}</a></li>)}</ul>:<p class="muted small">No sections on this page.</p>}</nav>

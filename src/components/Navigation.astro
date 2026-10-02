@@ -1,0 +1,23 @@
+---
+import Icon from './Icon.astro';
+import {site,url} from '../lib/content';
+const {active='home',compact=false}=Astro.props;
+const items=[['home','Home','/','home'],['writeups','Write-ups','/write-ups/','file'],['notes','Notes','/notes/','notes'],['topics','Topics','/topics/','tag'],['archives','Archives','/archives/','calendar'],['about','About','/about/','user']];
+---
+<div class:list={['navigation',{'is-compact':compact}]}>
+  <a href={url('/')} class="identity" aria-label={`${site.name} home`}><span class="monogram"><img src={url('/images/avatar.png')} alt=""/></span><span class="identity-text"><strong>{site.name}</strong><span>{site.description}</span></span></a>
+  <div class="socials" aria-label="Social links">
+    {site.socials.github&&<a href={site.socials.github} aria-label="GitHub" rel="me"><Icon name="github" size={18}/></a>}
+    {site.socials.linkedin&&<a href={site.socials.linkedin} aria-label="LinkedIn" rel="me"><Icon name="linkedin" size={18}/></a>}
+    <a href={url('/rss.xml')} aria-label="RSS feed"><Icon name="rss" size={18}/></a>
+  </div>
+  <nav aria-label="Main navigation">{items.map(([key,label,href,icon])=><a href={url(href)} class:list={['nav-link',{active:active===key}]} aria-current={active===key?'page':undefined} title={compact?label:undefined}><Icon name={icon}/><span>{label}</span></a>)}</nav>
+  {compact&&<button class="rail-menu icon-button" data-open="navigation-dialog" aria-label="Expand navigation" title="Expand navigation"><Icon name="menu"/></button>}
+  <div class="theme-controls">
+    <button class="theme-switch" type="button" data-theme-switch role="switch" aria-label="Switch to dark theme" aria-checked="false" title="Toggle light and dark theme">
+      <span class="theme-switch-icon"><Icon name="sun" size={19}/></span>
+      <span class="theme-switch-icon"><Icon name="moon" size={18}/></span>
+      <span class="theme-switch-thumb"></span>
+    </button>
+  </div>
+</div>

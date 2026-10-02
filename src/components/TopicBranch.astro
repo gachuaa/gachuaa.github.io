@@ -1,0 +1,8 @@
+---
+import Icon from './Icon.astro';
+import {taxonomy,url,topicEntries} from '../lib/content';
+const {id,entries,current}=Astro.props;
+const children=Object.keys(taxonomy.topics).filter(child=>taxonomy.topics[child].parent===id&&topicEntries(entries,child).length);
+const active=(x:string):boolean=>x===current||Object.keys(taxonomy.topics).filter(child=>taxonomy.topics[child].parent===x).some(active);
+---
+<details open={active(id)} data-topic-group><summary><Icon name="chevron" size={14}/><span>{taxonomy.topics[id].label}</span><span class="count">{topicEntries(entries,id).length}</span></summary><div class="topic-group-links"><a href={url(`/topics/${id}/`)} data-topic-card class:list={{active:id===current}} aria-current={id===current?'page':undefined}>All {taxonomy.topics[id].label}<small>{topicEntries(entries,id).length}</small></a>{children.map(child=><>{Object.keys(taxonomy.topics).some(x=>taxonomy.topics[x].parent===child)?<Astro.self id={child} entries={entries} current={current}/>:<a href={url(`/topics/${child}/`)} data-topic-card class:list={{active:child===current}} aria-current={child===current?'page':undefined}>{taxonomy.topics[child].label}<small>{topicEntries(entries,child).length}</small></a>}</>)}</div></details>
