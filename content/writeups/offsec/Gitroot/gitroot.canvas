@@ -2,9 +2,9 @@
 	"nodes":[
 		{"id":"4eb4fbf84db5b693","type":"group","x":6720,"y":7760,"width":7240,"height":2320,"color":"3","label":"user beth"},
 		{"id":"7e149018ea11f360","type":"group","x":6680,"y":11960,"width":2280,"height":4000,"color":"3","label":"user jen"},
-		{"id":"8a90d53d0fb51b4e","type":"group","x":1340,"y":1122,"width":3300,"height":1798,"label":"repo.gitroot.vuln"},
+		{"id":"8a90d53d0fb51b4e","type":"group","x":1340,"y":1122,"width":3300,"height":1798,"color":"2","label":"repo.gitroot.vuln"},
 		{"id":"37a6d9bf07c8a03c","type":"group","x":2140,"y":7600,"width":2300,"height":2160,"color":"3","label":"user pablo"},
-		{"id":"ce5cdb49a68c109f","type":"group","x":867,"y":-640,"width":3093,"height":584,"label":"wp.gitroot.vuln"},
+		{"id":"ce5cdb49a68c109f","type":"group","x":867,"y":-640,"width":3093,"height":584,"color":"2","label":"wp.gitroot.vuln"},
 		{"id":"86eb0f9715a38dab","type":"group","x":3490,"y":1320,"width":318,"height":244,"label":"files"},
 		{"id":"d6e376affa36edbc","type":"group","x":-2000,"y":-56,"width":304,"height":252,"label":"ports"},
 		{"id":"9b0abb813ac10acf","type":"file","file":"writeups/offsec/Gitroot/image/Pasted image 20261001222321.png","x":-858,"y":500,"width":687,"height":180},
