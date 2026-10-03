@@ -259,7 +259,7 @@ something interesting in : `addToMyrepo.txt`  🧠
 
 
 > [!possible attacks i used]
-> 1. [git slip vulnerability](https://github.com/advisories/GHSA-25g8-2mcf-fcx9)
+> 1. [git slip vulnerability](https://github.com/advisories/ghsa-4ph2-f6pf-79wv)
 > 	- can use it to write files in target repo
 > 	- and i succeeded to write files , then tried to overwrite add.sh
 > 	- but i didn't worked , after solving lab i analyze `add.sh` it is implemented to always write to specfic directory
