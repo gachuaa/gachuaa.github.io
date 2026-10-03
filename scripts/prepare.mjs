@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import sharp from 'sharp';
-import { validate, references, readCanvas, canvasFileTarget, processor, localTarget, withBase, markdownText, digest, walk } from '../src/lib/model.mjs';
+import { validate, references, readCanvas, canvasFileTarget, isSharedAsset, processor, localTarget, withBase, markdownText, digest, walk } from '../src/lib/model.mjs';
 
 function writeChanged(file,content) {
   fs.mkdirSync(path.dirname(file),{recursive:true});
@@ -17,22 +17,23 @@ export async function prepare(root=process.cwd(),dev=false) {
   for(const type of ['notes','writeups','articles']) fs.mkdirSync(path.join(generated,type),{recursive:true});
   for(const entry of selected) {
     const {tree,result}=references(entry.body);
-    const writeAsset=(bytes,ext)=>{
-      const asset=`${entry.type}/${entry.data.slug}/${digest(bytes)}${ext}`;
+    const writeAsset=(bytes,ext,shared=false)=>{
+      const asset=`${shared?'shared':`${entry.type}/${entry.data.slug}`}/${digest(bytes)}${ext}`;
       const dest=path.join(media,asset);writeChanged(dest,bytes);keep.add(dest);
       return withBase(`/_content/${asset}`,site.base);
     };
-    const copyAsset=async(file)=>{
+    const copyAsset=async(file,shared=false)=>{
       let bytes=fs.readFileSync(file),ext=path.extname(file).toLowerCase();
       if(['.png','.jpg','.jpeg','.webp'].includes(ext)) {
         bytes=await sharp(bytes).rotate().resize({width:1920,withoutEnlargement:true}).webp({quality:92}).toBuffer();ext='.webp';
       }
-      return writeAsset(bytes,ext);
+      return writeAsset(bytes,ext,shared);
     };
     const prepareCanvas=async(target)=>{
       const canvas=readCanvas(target);
       for(const node of canvas.nodes) if(node.type==='file'&&typeof node.file==='string'&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(node.file)) {
-        node.file=await copyAsset(canvasFileTarget(entry,target,node.file,root));
+        const file=canvasFileTarget(entry,target,node.file,root);
+        node.file=await copyAsset(file,isSharedAsset(root,file));
       }
       return writeAsset(Buffer.from(JSON.stringify(canvas)),'.canvas');
     };
@@ -42,7 +43,7 @@ export async function prepare(root=process.cwd(),dev=false) {
       const url=ref.url;
       if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) continue;
       if(url.startsWith('/')) {ref.node.url=withBase(url,site.base);continue;}
-      const target=localTarget(entry,url),suffix=url.match(/[?#].*$/)?.[0]||'';
+      const target=localTarget(entry,url),shared=isSharedAsset(root,target),suffix=url.match(/[?#].*$/)?.[0]||'';
       if(target.endsWith('.md')) {ref.node.url=withBase(targets.get(target).route,site.base)+suffix;continue;}
       if(ref.canvas) {
         canvasUrl=await prepareCanvas(target);
@@ -53,7 +54,9 @@ export async function prepare(root=process.cwd(),dev=false) {
       if(ref.image && ['.png','.jpg','.jpeg','.webp'].includes(ext)) {
         bytes=await sharp(bytes).rotate().resize({width:1920,withoutEnlargement:true}).webp({quality:92}).toBuffer();ext='.webp';
       }
-      ref.node.url=writeAsset(bytes,ext)+suffix;
+      const assetUrl=writeAsset(bytes,ext,shared)+suffix;
+      if(ref.replaceUrl)ref.replaceUrl(assetUrl);
+      else ref.node.url=assetUrl;
     }
     const meta={...entry.data,canvasUrl,draft:entry.draft,type:entry.type,sourcePath:entry.sourcePath,sourceUrl:withBase(`/_source/${entry.type}/${entry.data.slug}.md`,site.base),folders:entry.folders,folderLabels:entry.folderLabels,platform:entry.platform||'',minutes:Math.max(1,Math.ceil(entry.body.split(/\s+/).length/220))};
     const dest=path.join(generated,entry.type,`${entry.data.slug}.md`);

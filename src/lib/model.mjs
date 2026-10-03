@@ -83,6 +83,19 @@ export function references(body) {
       if (def) result.push({url:def.url,image:n.type==='imageReference',node:def});
     }
   });
+  visit(tree,'html',node=>{
+    const imageTags=/<img\b[^>]*>/gi;
+    for(const match of node.value.matchAll(imageTags)) {
+      const tag=match[0],attribute=/\s+src\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/i.exec(tag);
+      if(!attribute)continue;
+      const url=attribute[1]??attribute[2]??attribute[3];
+      if(!url)continue;
+      result.push({url,image:true,node,replaceUrl:value=>{
+        const replacement=tag.replace(attribute[0],prefix=>prefix.replace(url,value));
+        node.value=node.value.replace(tag,replacement);
+      }});
+    }
+  });
   visit(tree,'text',(node,index,parent)=>{
     if(!parent||index===undefined)return;
     const matches=[...node.value.matchAll(/!\[\[([^\]\r\n]+\.canvas)\]\]/gi)];
@@ -109,13 +122,16 @@ export function localTarget(entry,url) {
   try { pathname=decodeURIComponent(url.split(/[?#]/)[0]); } catch {throw new Error(`${entry.sourcePath}: invalid link encoding: ${url}`);}
   return path.resolve(path.dirname(entry.file),pathname);
 }
+export function isSharedAsset(root,file) {
+  return path.resolve(file).startsWith(path.resolve(root,'content/assets')+path.sep);
+}
 export function canvasFileTarget(entry,canvasFile,url,root=process.cwd()) {
   let pathname;
   try {pathname=decodeURIComponent(url);} catch {throw new Error(`${entry.sourcePath}: invalid Canvas file encoding: ${url}`);}
   const variants=[pathname,pathname.replace(/(^|\/)images(?=\/|$)/g,'$1image')];
   const bases=[path.dirname(canvasFile),path.join(root,'content'),root];
   const directory=path.dirname(entry.file),candidates=[...new Set(bases.flatMap(base=>variants.map(value=>path.resolve(base,value))))];
-  const safe=candidates.filter(file=>file.startsWith(directory+path.sep));
+  const safe=candidates.filter(file=>file.startsWith(directory+path.sep)||isSharedAsset(root,file));
   return safe.find(file=>fs.existsSync(file)&&fs.statSync(file).isFile())||safe[0]||path.resolve(path.dirname(canvasFile),pathname);
 }
 export function validate(root = process.cwd()) {
@@ -183,20 +199,20 @@ export function validate(root = process.cwd()) {
         if(!entry.draft&&target?.draft) fail(`${entry.sourcePath}: public content links to draft ${target.sourcePath}.`);
         continue;
       }
-      const target=localTarget(entry,url);
+      const target=localTarget(entry,url),shared=isSharedAsset(root,target);
       if(!fs.existsSync(target)||!fs.statSync(target).isFile()) {fail(`${entry.sourcePath}: missing local file ${url}.`);continue;}
       if(target.endsWith('.md')) {
         const found=byFile.get(target);
         if(!found) fail(`${entry.sourcePath}: link does not point to a content entry: ${url}.`);
         else if(!entry.draft&&found.draft) fail(`${entry.sourcePath}: public content links to draft ${found.sourcePath}.`);
-      } else if(!target.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep attachments inside their own entry folder: ${url}.`);
+      } else if(!shared&&!target.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep attachments inside their own entry folder or content/assets: ${url}.`);
       if(ref.canvas) {
         let canvas;
         try {canvas=readCanvas(target);} catch(error) {fail(`${entry.sourcePath}: ${error.message}`);continue;}
         for(const node of canvas.nodes) if(node.type==='file'&&typeof node.file==='string'&&!/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(node.file)) {
           let file;
           try {file=canvasFileTarget(entry,target,node.file,root);} catch(error) {fail(error.message);continue;}
-          if(!file.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep Canvas attachments inside their own entry folder: ${node.file}.`);
+          if(!isSharedAsset(root,file)&&!file.startsWith(path.dirname(entry.file)+path.sep)) fail(`${entry.sourcePath}: keep Canvas attachments inside their own entry folder or content/assets: ${node.file}.`);
           else if(!fs.existsSync(file)||!fs.statSync(file).isFile()) fail(`${entry.sourcePath}: missing Canvas attachment ${node.file}.`);
         }
       }

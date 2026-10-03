@@ -160,6 +160,10 @@ The CLI creates an `image/` directory beside the entry's `index.md`. Put that en
 
 Keep attachments inside the entry folder. Existing `images/` folders continue to work, while new entries use `image/`. Local PNG, JPG, JPEG, and WebP images are optimized during the build. Files in `public/` are copied to the site unchanged; for example, `public/images/avatar.png` is available at `/images/avatar.png`.
 
+For files reused across entries, place them under `content/assets/`. Markdown links can use a relative path such as `../../../assets/memes/reaction.png` from a write-up under `content/writeups/offsec/name/`. In an Obsidian Canvas with `content/` as the vault root, use `assets/memes/reaction.png`. The content checker and build accept shared files only from `content/assets/`.
+
+Keep attachments inside the entry folder. Existing `images/` folders continue to work, while new entries use `image/`. Local PNG, JPG, JPEG, and WebP images are optimized during the build. Files in `public/` are copied to the site unchanged; for example, `public/images/avatar.png` is available at `/images/avatar.png`.
+
 ## Preview, validate, and publish
 
 Start the local preview:

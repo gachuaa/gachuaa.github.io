@@ -327,17 +327,28 @@ const tocLinks = [...document.querySelectorAll('[data-toc-link]')];
 const headings = tocLinks.map((link) => document.getElementById(link.dataset.tocLink)).filter(Boolean);
 if (tocLinks.length) {
   const updateToc=()=>{
-    let activeHeading=headings[0];
+    const hashMatch = window.location.hash ? tocLinks.find((link) => link.dataset.tocLink === window.location.hash.slice(1)) : null;
+    let activeHeading = hashMatch ? document.getElementById(hashMatch.dataset.tocLink) : headings[0];
     const threshold=Math.min(window.innerHeight*.25,180);
-    for(const heading of headings){
-      if(heading.getBoundingClientRect().top<=threshold)activeHeading=heading;
-      else break;
+    if (!hashMatch) {
+      for(const heading of headings){
+        if(heading.getBoundingClientRect().top<=threshold)activeHeading=heading;
+        else break;
+      }
+      if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2)activeHeading=headings.at(-1);
     }
-    if(window.innerHeight+window.scrollY>=document.documentElement.scrollHeight-2)activeHeading=headings.at(-1);
     if(!activeHeading)return;
     const activeLink=tocLinks.find((link)=>link.dataset.tocLink===activeHeading.id);
-    if(!activeLink||activeLink.getAttribute('aria-current')==='true')return;
-    tocLinks.forEach((link)=>link.setAttribute('aria-current',String(link===activeLink)));
+    if(!activeLink)return;
+    tocLinks.forEach((link)=>link.setAttribute('aria-current',String(link.dataset.tocLink===activeLink.dataset.tocLink)));
+    for(let parent=activeLink.closest('li')?.parentElement?.closest('li');parent;parent=parent.parentElement?.closest('li')){
+      const children=parent.querySelector(':scope > ul');
+      if(!children)continue;
+      children.hidden=false;
+      const toggle=parent.querySelector(':scope > .toc-row [data-toc-toggle]');
+      toggle?.setAttribute('aria-expanded','true');
+      if(toggle)toggle.setAttribute('aria-label',`Collapse ${toggle.dataset.tocLabel}`);
+    }
     const panel=activeLink.closest('.sticky-panel');
     if(!panel?.clientHeight)return;
     const linkBounds=activeLink.getBoundingClientRect(),panelBounds=panel.getBoundingClientRect();
@@ -346,8 +357,19 @@ if (tocLinks.length) {
   };
   window.addEventListener('scroll',updateToc,{passive:true});
   window.addEventListener('resize',updateToc);
+  window.addEventListener('hashchange',updateToc);
   updateToc();
 }
+document.addEventListener('click',(event)=>{
+  const toggle=event.target.closest?.('[data-toc-toggle]');
+  if(!toggle)return;
+  const children=toggle.closest('li')?.querySelector(':scope > ul');
+  if(!children)return;
+  const expanded=toggle.getAttribute('aria-expanded')==='true';
+  children.hidden=expanded;
+  toggle.setAttribute('aria-expanded',String(!expanded));
+  toggle.setAttribute('aria-label',`${expanded?'Expand':'Collapse'} ${toggle.dataset.tocLabel}`);
+});
 
 document.querySelectorAll('.prose pre').forEach((pre) => {
   if (pre.parentElement?.classList.contains('code-block')) return;

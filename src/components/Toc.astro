@@ -1,4 +1,25 @@
 ---
 const {headings=[],compact=false}=Astro.props;
+const tree:any[]=[];
+const stack:any[]=[];
+for(const heading of headings.filter((item:any)=>item.depth>=1&&item.depth<=6)) {
+ const node={...heading,children:[]};
+ while(stack.length&&stack.at(-1).depth>=node.depth)stack.pop();
+ if(stack.length)stack.at(-1).children.push(node);
+ else tree.push(node);
+ stack.push(node);
+}
+const escapeHtml=(value:string)=>value.replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]||char));
+const renderTree=(items:any[],level=1):string=>{
+ const rows=items.map(item=>{
+  const label=escapeHtml(item.text),slug=escapeHtml(item.slug);
+  const toggle=item.children.length
+   ? '<button type="button" class="toc-toggle" data-toc-toggle data-toc-label="'+label+'" aria-expanded="true" aria-label="Collapse '+label+'"></button>'
+   : '<span class="toc-toggle-placeholder" aria-hidden="true"></span>';
+  const children=item.children.length?renderTree(item.children,level+1):'';
+  return '<li class="toc-depth-'+level+'"><div class="toc-row">'+toggle+'<a href="#'+slug+'" data-toc-link="'+slug+'">'+label+'</a></div>'+children+'</li>';
+ });
+ return '<ul>'+rows.join('')+'</ul>';
+};
 ---
-<nav class="toc" aria-label="On this page"><h2>On this page</h2>{headings.length?<ul>{headings.filter((h:any)=>h.depth>=2&&h.depth<=3).map((h:any)=><li class:list={{nested:h.depth===3}}><a href={`#${h.slug}`} data-toc-link={h.slug}>{h.text}</a></li>)}</ul>:<p class="muted small">No sections on this page.</p>}</nav>
+<nav class="toc" aria-label="On this page"><h2>On this page</h2>{tree.length?<div set:html={renderTree(tree)}/>:<p class="muted small">No sections on this page.</p>}</nav>

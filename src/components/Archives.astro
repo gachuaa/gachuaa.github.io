@@ -7,7 +7,7 @@ const {all}=Astro.props;
 const entries=all.filter((e:any)=>e.data.publishedAt&&!e.data.draft);
 const years=[...new Set(entries.map((e:any)=>e.data.publishedAt.slice(0,4)))].sort().reverse();
 ---
-<div class="page" data-filter-scope><header class="page-heading"><h1>Archives</h1><p>Everything, ordered by publication date.</p></header><TypeTabs filter/>
+<div class="page" data-filter-scope><TypeTabs filter/>
  <div class="list-heading"><span class="muted small">Browse by year and month</span><button class="collapse-button" data-collapse-all>Collapse all</button></div>
  {years.map((year:any,yi)=>{
   const months=[...new Set(entries.filter((e:any)=>e.data.publishedAt.startsWith(year)).map((e:any)=>e.data.publishedAt.slice(0,7)))].sort().reverse();

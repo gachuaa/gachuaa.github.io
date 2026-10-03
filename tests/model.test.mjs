@@ -41,6 +41,45 @@ test('Obsidian canvas embeds become local attachment references',()=>{
   assert.match(processor.stringify(tree),/<div class="canvas-board" data-canvas-src=""><\/div>/);
 });
 
+test('local HTML image sources can be rewritten without losing sizing',()=>{
+  const {tree,result}=references('<span class="spoiler"><img src="./image/demo.gif" alt="Demo" width="160"></span>');
+  assert.equal(result[0].url,'./image/demo.gif');
+  result[0].replaceUrl('/_content/writeups/demo/asset.gif');
+  assert.match(processor.stringify(tree),/<span class="spoiler"><img src="\/_content\/writeups\/demo\/asset.gif" alt="Demo" width="160"><\/span>/);
+});
+
+test('assets under content/assets can be reused from Markdown and Canvas',async()=>{
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'root-assets-'));
+  try {
+    const entry=path.join(temp,'content/notes/shared-media');
+    fs.mkdirSync(entry,{recursive:true});
+    fs.mkdirSync(path.join(temp,'content/assets/images'),{recursive:true});
+    fs.mkdirSync(path.join(temp,'content/assets/memes'),{recursive:true});
+    fs.mkdirSync(path.join(temp,'config'),{recursive:true});
+    fs.writeFileSync(path.join(temp,'config/site.yml'),'name: Test\ndescription: Test\ntagline: Test\nurl: https://example.test\nbase: /\ntimezone: UTC\npageSize: 10\nsocials: {}\nabout: Test\n');
+    fs.writeFileSync(path.join(temp,'config/taxonomy.yml'),'topics:\n  security:\n    label: Security\nplatforms: {}\n');
+    fs.writeFileSync(path.join(entry,'index.md'),'---\ntitle: Shared media\ndescription: Shared media test.\nslug: shared-media\ndraft: false\npublishedAt: 2026-09-30\ntopics: [security]\ncanvas: board.canvas\n---\n\n![Diagram](../../assets/images/diagram.svg)\n\n<img src="../../assets/memes/reaction.svg" alt="Reaction">\n');
+    fs.writeFileSync(path.join(entry,'board.canvas'),JSON.stringify({nodes:[{id:'shared-image',type:'file',file:'assets/images/diagram.svg',x:0,y:0,width:300,height:180}],edges:[]}));
+    const svg='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>';
+    fs.writeFileSync(path.join(temp,'content/assets/images/diagram.svg'),svg);
+    fs.writeFileSync(path.join(temp,'content/assets/memes/reaction.svg'),svg.replace('<rect','<circle').replace('/></svg>',' r="1"/></svg>'));
+
+    await prepare(temp);
+    const generated=fs.readFileSync(path.join(temp,'.generated/content/notes/shared-media.md'),'utf8');
+    assert.equal((generated.match(/\/_content\/shared\//g)||[]).length,2);
+    assert.equal(fs.readdirSync(path.join(temp,'public/_content/shared')).length,2);
+    const {data}=parseMarkdown(generated);
+    const canvas=JSON.parse(fs.readFileSync(path.join(temp,'public',data.canvasUrl.slice(1)),'utf8'));
+    assert.match(canvas.nodes[0].file,/^\/_content\/shared\/[a-f0-9]+\.svg$/);
+
+    fs.writeFileSync(path.join(temp,'outside.png'),'not an allowed shared asset');
+    fs.writeFileSync(path.join(entry,'index.md'),'---\ntitle: Shared media\ndescription: Shared media test.\nslug: shared-media\ndraft: false\npublishedAt: 2026-09-30\ntopics: [security]\n---\n\n![Escape](../../../outside.png)\n');
+    assert.throws(()=>validate(temp),/keep attachments inside their own entry folder or content\/assets/);
+  } finally {
+    fs.rmSync(temp,{recursive:true,force:true});
+  }
+});
+
 test('content preparation publishes Canvas boards and local file nodes',async()=>{
   const temp=fs.mkdtempSync(path.join(os.tmpdir(),'canvas-content-'));
   try {

@@ -4,7 +4,6 @@ import EntryTile from './EntryTile.astro';
 import Pagination from './Pagination.astro';
 import TypeTabs from './TypeTabs.astro';
 import NotesTree from './NotesTree.astro';
-import Icon from './Icon.astro';
 import {site,taxonomy,url,topicEntries} from '../lib/content';
 const {view,entries,all,page=1,total=1,base='/',alphabetical=false}=Astro.props;
 const isNotes=view==='notes';
@@ -15,15 +14,14 @@ const roots=Object.keys(taxonomy.topics).filter(id=>!taxonomy.topics[id].parent&
 <div class="page">
  <div class:list={{'home-grid':view==='home','notes-grid':isNotes}}>
   <section class="home-main">
-    <header class="page-heading"><h1>{titles[view]}</h1>{subtitles[view]&&<p>{subtitles[view]}</p>}</header>
+    {view==='home'&&<header class="page-heading"><h1>{titles[view]}</h1>{subtitles[view]&&<p>{subtitles[view]}</p>}</header>}
    {['home','articles'].includes(view)&&<TypeTabs active={view==='home'?'all':'articles'}/>}
-   {isNotes&&<nav class="type-tabs" aria-label="Notes order"><a href={url('/notes/')} aria-current={!alphabetical?'page':undefined}>Recently updated</a><a href={url('/notes/all/')} aria-current={alphabetical?'page':undefined}>All notes</a><button class="mobile-panel-button" data-open="tree-dialog"><Icon name="folder" size={17}/> Notes tree</button></nav>}
+    {isNotes&&<nav class="type-tabs" aria-label="Notes order"><a href={url('/notes/')} aria-current={!alphabetical?'page':undefined}>Recently updated</a><a href={url('/notes/all/')} aria-current={alphabetical?'page':undefined}>All notes</a></nav>}
     <div class="list-heading"><strong>{view==='home'?'Latest':`${Astro.props.count||entries.length} ${isNotes?'notes':'entries'}`}</strong>{view!=='home'&&<span class="muted small">{isNotes?(alphabetical?'A–Z':'Updated first'):'Newest first'}</span>}</div>
-   {entries.length?(view==='home'||view==='articles'?<div class="entry-tile-grid">{entries.map((entry:any)=><EntryTile entry={entry}/>)}</div>:entries.map((entry:any)=><EntryRow entry={entry} showUpdated={isNotes} compact={view==='archive'||view==='platform'}/>)):<div class="empty-state"><h2>Nothing here yet</h2><p>Published entries will appear here.</p><a class="text-link" href={url('/')}>Browse the notebook</a></div>}
+  {entries.length?(view==='home'||view==='articles'?<div class="entry-tile-grid">{entries.map((entry:any)=><EntryTile entry={entry}/>)}</div>:entries.map((entry:any)=><EntryRow entry={entry} showUpdated={isNotes} compact={view==='archive'||view==='platform'}/>)):!isNotes&&<div class="empty-state"><h2>Nothing here yet</h2><p>Published entries will appear here.</p><a class="text-link" href={url('/')}>Browse the notebook</a></div>}
    {view!=='platform'&&<Pagination page={page} total={total} base={base}/>}
   </section>
   {view==='home'&&<aside class="right-home"><h2>Explore topics</h2><ul class="topic-shortlist">{roots.slice(0,5).map(id=><li><a href={url(`/topics/${id}/`)}><span>{taxonomy.topics[id].label}</span><span>{topicEntries(all,id).length}</span></a></li>)}</ul><a class="text-link" href={url('/topics/')}>View all topics</a><div class="start-links"><h2>Start here</h2><a href={url('/write-ups/')}>Browse write-ups</a><a href={url('/notes/')}>Open the notes library</a></div></aside>}
   {isNotes&&<aside class="notes-side sticky-panel"><NotesTree entries={all}/></aside>}
  </div>
 </div>
-{isNotes&&<dialog id="tree-dialog" class="drawer drawer-right" aria-label="Notes tree"><div class="dialog-heading"><strong>Notes tree</strong><button class="icon-button" data-close aria-label="Close notes tree"><Icon name="close"/></button></div><NotesTree entries={all}/></dialog>}

@@ -11,7 +11,7 @@ const d=entry.data;
     <div class="entry-tile-meta">
       <span class="type-label">{typeLabel(d.type)}</span>
       <time datetime={d.updatedAt||d.publishedAt}>{formatDate(d.updatedAt||d.publishedAt)}</time>
-      {d.minutes&&<span>{d.minutes} min</span>}
+      {d.minutes&&<span>{d.minutes} min read</span>}
     </div>
   </div>
 </article>

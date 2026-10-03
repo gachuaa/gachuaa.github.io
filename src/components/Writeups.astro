@@ -1,15 +1,15 @@
 ---
 import Collection from './Collection.astro';
-import Icon from './Icon.astro';
-import {taxonomy,url,topicEntries} from '../lib/content';
-const {entries}=Astro.props;
-const platforms=Object.entries(taxonomy.platforms).filter(([id])=>entries.some((e:any)=>e.data.platform===id));
-const topics=Object.keys(taxonomy.topics).filter(id=>topicEntries(entries,id).length);
+import {taxonomy,url} from '../lib/content';
+const {entries,all,platformId,platformLabel}=Astro.props;
+const allWriteups=all.filter((e:any)=>e.data.type==='writeups');
+const platforms=Object.entries(taxonomy.platforms).filter(([id])=>allWriteups.some((e:any)=>e.data.platform===id));
 ---
-<div class="page" data-filter-scope><header class="page-heading"><h1>Write-ups</h1><p>Lab walkthroughs, organized by platform.</p></header>
- <div class="filters"><label>Difficulty<select data-difficulty-filter><option value="">All difficulties</option>{['easy','medium','hard','insane'].map(d=><option value={d}>{d[0].toUpperCase()+d.slice(1)}</option>)}</select></label><label>Topic<select data-topic-filter><option value="">All topics</option>{topics.map(id=><option value={id}>{taxonomy.topics[id].label}</option>)}</select></label></div>
- <div class="list-heading"><span class="muted">{entries.length} write-ups</span><button class="collapse-button" data-collapse-all>Collapse all</button></div>
- {platforms.map(([id,platform]:any,i)=><details class="accordion filter-group" open={i===0} data-filter-group><summary><Icon name="chevron" size={18}/><span>{platform.label}</span><span class="count" data-group-count>{entries.filter((e:any)=>e.data.platform===id).length}</span></summary><div class="accordion-body"><Collection entries={entries.filter((e:any)=>e.data.platform===id)} compact limit={10} paginate={false}/><a class="text-link writeup-show-all" href={url(`/write-ups/platform/${id}/`)}>Show all <Icon name="chevron" size={15}/></a></div></details>)}
+<div class="page writeups-page" data-filter-scope>
+ <nav class="writeup-platform-tabs" aria-label="Write-up platforms">
+  <a href={url('/write-ups/')} aria-current={!platformId?'page':undefined}>All <small>{allWriteups.length}</small></a>
+  {platforms.map(([id,platform]:any)=><a href={url(`/write-ups/platform/${id}/`)} aria-current={id===platformId?'page':undefined}>{platform.label}<small>{allWriteups.filter((entry:any)=>entry.data.platform===id).length}</small></a>)}
+ </nav>
+ <Collection entries={entries} limit={entries.length||1} paginate={false} showUpdated metaAtBottom/>
  {!entries.length&&<p class="empty-state">Published write-ups will appear here.</p>}
- <p class="empty-state" data-scope-empty hidden>No write-ups match these filters. Try another difficulty or topic.</p>
 </div>

@@ -34,12 +34,144 @@ const canonical=new URL(canonicalPath,site.url).href;
      {reading&&<button class="button focus-toggle" data-focus aria-pressed="false"><Icon name="focus" size={17}/><span>Focus</span></button>}
     </header>
     <main id="main" tabindex="-1"><slot/></main>
-    <footer class="page-footer" data-pagefind-ignore><span>{site.name}</span><a href={url('/rss.xml')}>RSS</a><a href={url('/about/')}>About this notebook</a><a href="#main">Back to top</a></footer>
    </div>
   </div>
   <SearchOverlay/>
   <dialog id="navigation-dialog" class="drawer navigation-drawer" aria-label="Navigation"><div class="dialog-heading"><strong>Navigation</strong><button class="icon-button" data-close aria-label="Close navigation"><Icon name="close"/></button></div><Navigation active={active}/></dialog>
+    <dialog class="media-lightbox" data-media-lightbox aria-label="Image preview">
+     <button type="button" class="icon-button media-lightbox-close" data-close aria-label="Close image preview"><Icon name="close"/></button>
+      <div class="media-lightbox-controls" aria-label="Image zoom controls">
+       <button type="button" class="icon-button" data-media-zoom-out aria-label="Zoom out" title="Zoom out">−</button>
+       <output data-media-zoom-level>Fit</output>
+       <button type="button" class="icon-button" data-media-zoom-in aria-label="Zoom in" title="Zoom in">+</button>
+       <button type="button" class="icon-button" data-media-zoom-reset aria-label="Fit image to view" title="Fit image">Fit</button>
+      </div>
+      <div class="media-lightbox-viewport" data-media-lightbox-viewport>
+      <img data-media-lightbox-image alt="" tabindex="0" role="button" aria-label="Press Enter or click to close zoomed image"/>
+      </div>
+    </dialog>
   <slot name="dialogs"/>
+  <script>
+   const mediaRoot = document.documentElement;
+   const mediaBody = document.body;
+   let mediaScrollY = 0;
+  let mediaZoom = 1;
+  const mediaDialog = document.querySelector('[data-media-lightbox]');
+  const mediaPreview = mediaDialog?.querySelector('[data-media-lightbox-image]');
+  const mediaZoomLevel = mediaDialog?.querySelector('[data-media-zoom-level]');
+  const mediaZoomOut = mediaDialog?.querySelector('[data-media-zoom-out]');
+  const mediaZoomIn = mediaDialog?.querySelector('[data-media-zoom-in]');
+  const mediaViewport = mediaDialog?.querySelector('[data-media-lightbox-viewport]');
+  let mediaFitWidth = 0;
+   const setMediaZoom = (zoom, anchor) => {
+    const previousZoom = mediaZoom;
+    const viewportRect = anchor ? mediaViewport?.getBoundingClientRect() : null;
+    const imageRect = anchor ? mediaPreview?.getBoundingClientRect() : null;
+   mediaZoom = Math.min(3, Math.max(1, zoom));
+   if (mediaPreview?.naturalWidth && mediaViewport) {
+    const fitScale = Math.min(mediaViewport.clientWidth / mediaPreview.naturalWidth, mediaViewport.clientHeight / mediaPreview.naturalHeight);
+    mediaFitWidth = mediaPreview.naturalWidth * fitScale;
+    mediaPreview.style.width = `${mediaFitWidth * mediaZoom}px`;
+      if (anchor && viewportRect && imageRect) {
+       const factor = mediaZoom / previousZoom;
+       mediaViewport.scrollTo({
+         left: (anchor.clientX - imageRect.left) * factor - (anchor.clientX - viewportRect.left),
+         top: (anchor.clientY - imageRect.top) * factor - (anchor.clientY - viewportRect.top),
+         behavior: 'instant'
+       });
+      } else {
+       mediaViewport.scrollTo({
+         left: Math.max(0, (mediaPreview.clientWidth - mediaViewport.clientWidth) / 2),
+         top: Math.max(0, (mediaPreview.clientHeight - mediaViewport.clientHeight) / 2),
+         behavior: 'instant'
+       });
+      }
+   }
+   if (mediaZoomLevel) mediaZoomLevel.textContent = mediaZoom === 1 ? 'Fit' : `${Math.round(mediaZoom * 100)}%`;
+   if (mediaZoomOut) mediaZoomOut.disabled = mediaZoom === 1;
+   if (mediaZoomIn) mediaZoomIn.disabled = mediaZoom === 3;
+  };
+  mediaPreview?.addEventListener('load', () => setMediaZoom(mediaZoom));
+   mediaViewport?.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    if (event.deltaY) setMediaZoom(mediaZoom * Math.exp(-event.deltaY * .00065), event);
+   }, {passive:false});
+  mediaZoomOut?.addEventListener('click', () => setMediaZoom(mediaZoom - .25));
+  mediaZoomIn?.addEventListener('click', () => setMediaZoom(mediaZoom + .25));
+  mediaDialog?.querySelector('[data-media-zoom-reset]')?.addEventListener('click', () => setMediaZoom(1));
+     const openMediaPreview = (image) => {
+        const dialog = document.querySelector('[data-media-lightbox]');
+        const preview = dialog?.querySelector('[data-media-lightbox-image]');
+        if (!dialog || !preview) return;
+        mediaScrollY = window.scrollY;
+        preview.src = image.currentSrc || image.src;
+        preview.alt = image.alt;
+      setMediaZoom(1);
+      if (preview.complete) setMediaZoom(1);
+      mediaRoot.classList.add('media-scroll-lock');
+      mediaBody.style.setProperty('--media-scroll-top', `-${mediaScrollY}px`);
+      mediaBody.classList.add('media-dialog-open');
+        dialog.showModal();
+        preview.focus({preventScroll:true});
+     };
+     mediaDialog?.addEventListener('close', () => {
+      mediaBody.classList.remove('media-dialog-open');
+      mediaBody.style.removeProperty('--media-scroll-top');
+        const restoreScroll = () => window.scrollTo({top: mediaScrollY, left: 0, behavior: 'instant'});
+        restoreScroll();
+        requestAnimationFrame(() => {
+         restoreScroll();
+         if (!mediaDialog.open) mediaRoot.classList.remove('media-scroll-lock');
+        });
+     });
+    mediaDialog?.addEventListener('click', (event) => {
+     const target = event.target instanceof Element ? event.target : null;
+     if (target?.closest('[data-media-lightbox-image], .media-lightbox-controls, .media-lightbox-close')) return;
+     mediaDialog.close();
+    });
+     document.querySelectorAll('.prose img').forEach((image) => {
+        image.tabIndex = 0;
+        image.setAttribute('role', 'button');
+        image.setAttribute('aria-label', `Open full-size image${image.alt ? `: ${image.alt}` : ''}`);
+     });
+   document.addEventListener('click', (event) => {
+       const zoomedPreview = event.target instanceof Element ? event.target.closest('[data-media-lightbox-image]') : null;
+       if (zoomedPreview) {
+        mediaDialog?.close();
+        return;
+       }
+        const clicked = event.target instanceof Element ? event.target.closest('.prose img') : null;
+        const image = clicked instanceof HTMLImageElement ? clicked : null;
+        const spoiler = image?.closest('.spoiler');
+        if (image && spoiler && !spoiler.classList.contains('revealed')) {
+         spoiler.classList.add('revealed');
+         return;
+        }
+        if (image) {
+         openMediaPreview(image);
+         return;
+        }
+        const target = event.target instanceof Element ? event.target.closest('.spoiler') : null;
+    if (!target) return;
+    target.classList.toggle('revealed');
+   });
+     document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        const zoomedPreview = event.target instanceof Element ? event.target.closest('[data-media-lightbox-image]') : null;
+        if (zoomedPreview) {
+        event.preventDefault();
+        mediaDialog?.close();
+        return;
+        }
+        const clicked = event.target instanceof Element ? event.target.closest('.prose img[tabindex]') : null;
+        const image = clicked instanceof HTMLImageElement ? clicked : null;
+        if (!image) return;
+        event.preventDefault();
+        const spoiler = image.closest('.spoiler');
+        if (spoiler && !spoiler.classList.contains('revealed')) spoiler.classList.add('revealed');
+        else openMediaPreview(image);
+     });
+  </script>
   <script>import '../lib/client';</script>
  </body>
 </html>

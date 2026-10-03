@@ -1,11 +1,11 @@
 ---
 import {entryUrl,formatDate,typeLabel,topicLabel,url} from '../lib/content';
-const {entry,compact=false,showUpdated=false}=Astro.props;
+const {entry,compact=false,showUpdated=false,metaAtBottom=true}=Astro.props;
 const d=entry.data;
 ---
 <article class:list={['entry-row',{compact}]}>
- <div class="entry-main"><div class="entry-title-line"><h2><a href={entryUrl(entry)}>{d.title}</a></h2><span class="type-label">{typeLabel(d.type)}</span>{d.draft&&<span class="draft-label">Draft</span>}</div>
+ <div class="entry-main"><div class="entry-title-line"><h2><a href={entryUrl(entry)}>{d.title}</a></h2>{!metaAtBottom&&<span class="type-label">{typeLabel(d.type)}</span>}{d.draft&&<span class="draft-label">Draft</span>}</div>
  {!compact&&<p class="entry-description">{d.description}</p>}
  {!compact&&<div class="entry-topics">{d.topics.slice(0,2).map((id:string)=><a href={url(`/topics/${id}/`)}>{topicLabel(id)}</a>)}</div>}</div>
- <div class="entry-meta">{d.difficulty&&<span>{d.difficulty}</span>}{d.os&&<span>{d.os}</span>}<time datetime={(showUpdated&&d.updatedAt)||d.publishedAt}>{showUpdated&&d.updatedAt?'Updated ':''}{formatDate((showUpdated&&d.updatedAt)||d.publishedAt)}</time></div>
+ <div class="entry-meta">{metaAtBottom&&<span class="type-label">{typeLabel(d.type)}</span>}{d.difficulty&&<span>{d.difficulty}</span>}{d.os&&<span>{d.os}</span>}{d.minutes&&<span>{d.minutes} min read</span>}<time datetime={(showUpdated&&d.updatedAt)||d.publishedAt}>{showUpdated&&d.updatedAt?'Updated ':''}{formatDate((showUpdated&&d.updatedAt)||d.publishedAt)}</time></div>
 </article>

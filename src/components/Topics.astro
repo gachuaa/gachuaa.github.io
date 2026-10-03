@@ -9,12 +9,11 @@ const selected=topic&&available.includes(topic)?topic:available[0],entries=selec
 const roots=available.filter(id=>!taxonomy.topics[id].parent);
 ---
 <div class="page topic-directory-page" data-filter-scope>
- <header class="page-heading"><h1>Topics</h1><p>Use topics as a map: choose a subject, then read every related note, write-up, and article in one place.</p></header>
  <div class="topic-layout">
   <aside class="topic-groups topic-directory-sidebar">
    <div class="topic-directory-tools"><label class="sr-only" for="topic-lookup">Find a topic</label><input class="directory-filter" id="topic-lookup" placeholder="Find a topic…" data-topic-lookup/><span class="muted small">{available.length} active topics</span></div>
     <nav class="topic-directory-tree" aria-label="Topic categories">{roots.map(id=><TopicBranch id={id} entries={all} current={selected}/>)}</nav>
   </aside>
-  <section class="topic-results"><div class="topic-results-heading"><div><span class="eyebrow">Selected topic</span><h2 class="section-title">{selected?taxonomy.topics[selected].label:'Topics'}</h2><p class="muted small">{entries.length} related {entries.length===1?'entry':'entries'}</p></div><TypeTabs filter/></div><Collection entries={entries}/></section>
+  <section class="topic-results"><div class="topic-results-heading"><TypeTabs filter/></div><Collection entries={entries}/></section>
  </div>
  </div>
