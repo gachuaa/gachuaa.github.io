@@ -360,3 +360,8 @@ cat .viminfo
 <img src="../../../assets/memes/putin-walk.gif" alt="cj" width="320">
 
 
+---
+
+**Special Thanks:**
+
+- **[sparrow](https://discord.com/users/1144815975066259536)** — For emotional support, caffeine supply, and pointing out the 47 typos I was blind to.
