@@ -15,6 +15,22 @@ export const slugify = value => String(value).normalize('NFKD').replace(/[\u0300
 export const validId = value => typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 export const pretty = value => value.split('-').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
 export const normalizeBase = value => value && value !== '/' ? `/${value.replace(/^\/+|\/+$/g, '')}/` : '/';
+export function normalizeRoute(value, routes) {
+  const path = String(value).replace(/^\/+|\/+$/g, '');
+  const candidates = routes instanceof Map ? routes.keys() : routes;
+  const normalized = path.toLowerCase();
+  for (const candidate of candidates) {
+    const candidatePath = String(candidate).replace(/^\/+|\/+$/g, '').toLowerCase();
+    if (candidatePath === normalized) return candidate;
+  }
+}
+export function resolveCaseInsensitivePath(file) {
+  if (fs.existsSync(file)) return file;
+  const parent = path.dirname(file), name = path.basename(file);
+  if (!fs.existsSync(parent)) return file;
+  const match = fs.readdirSync(parent).find(candidate => candidate.toLowerCase() === name.toLowerCase());
+  return match ? path.join(parent,match) : file;
+}
 export function withBase(value, base = '/') {
   if (!value || /^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(value)) return value;
   const b = normalizeBase(base);
@@ -120,7 +136,7 @@ export function readCanvas(file) {
 export function localTarget(entry,url) {
   let pathname;
   try { pathname=decodeURIComponent(url.split(/[?#]/)[0]); } catch {throw new Error(`${entry.sourcePath}: invalid link encoding: ${url}`);}
-  return path.resolve(path.dirname(entry.file),pathname);
+  return resolveCaseInsensitivePath(path.resolve(path.dirname(entry.file),pathname));
 }
 export function isSharedAsset(root,file) {
   return path.resolve(file).startsWith(path.resolve(root,'content/assets')+path.sep);
@@ -132,7 +148,7 @@ export function canvasFileTarget(entry,canvasFile,url,root=process.cwd()) {
   const bases=[path.dirname(canvasFile),path.join(root,'content'),root];
   const directory=path.dirname(entry.file),candidates=[...new Set(bases.flatMap(base=>variants.map(value=>path.resolve(base,value))))];
   const safe=candidates.filter(file=>file.startsWith(directory+path.sep)||isSharedAsset(root,file));
-  return safe.find(file=>fs.existsSync(file)&&fs.statSync(file).isFile())||safe[0]||path.resolve(path.dirname(canvasFile),pathname);
+  return safe.map(resolveCaseInsensitivePath).find(file=>fs.existsSync(file)&&fs.statSync(file).isFile())||safe[0]||path.resolve(path.dirname(canvasFile),pathname);
 }
 export function validate(root = process.cwd()) {
   const {site,taxonomy} = readConfig(root), entries=getSources(root), errors=[];
@@ -162,7 +178,7 @@ export function validate(root = process.cwd()) {
     if(d.canvas!==undefined&&(typeof d.canvas!=='string'||!d.canvas.toLowerCase().endsWith('.canvas')||/^(?:[a-z][a-z0-9+.-]*:|\/\/|\/)/i.test(d.canvas))) fail(`${prefix}: canvas must be a local .canvas file inside the entry folder.`);
     const key=`${entry.type}/${d.slug}`;
     if(seenSlugs.has(key)) fail(`${prefix}: duplicate slug ${d.slug}.`);
-    seenSlugs.add(key);routes.add(entry.route);
+    seenSlugs.add(key);routes.add(entry.route.toLowerCase());
     if(d.draft!==undefined&&typeof d.draft!=='boolean') fail(`${prefix}: draft must be true or false.`);
     if(entry.folders.some(x=>!validId(x))) fail(`${prefix}: folder names must use lowercase-hyphenated IDs.`);
     if(entry.type==='writeups' && !platforms[entry.platform]) fail(`${prefix}: register its platform using npm run category.`);
@@ -181,11 +197,12 @@ export function validate(root = process.cwd()) {
     if(d.order!==undefined&&(!Number.isFinite(d.order)||d.order<0)) fail(`${prefix}: order must be a non-negative number.`);
     if(d.aliases!==undefined&&(!Array.isArray(d.aliases)||d.aliases.some(x=>typeof x!=='string'||!/^\/(?:[a-z0-9-]+\/)+$/.test(x)))) fail(`${prefix}: aliases must be root-relative paths with a trailing slash.`);
   }
-  const byFile=new Map(entries.map(e=>[e.file,e])),byRoute=new Map(entries.map(e=>[e.route,e]));
+  const byFile=new Map(entries.map(e=>[e.file,e])),byRoute=new Map(entries.map(e=>[e.route.toLowerCase(),e]));
   for(const entry of entries) {
     for(const alias of Array.isArray(entry.data.aliases)?entry.data.aliases:[]) {
-      if(routes.has(alias)) fail(`${entry.sourcePath}: alias collision ${alias}.`);
-      routes.add(alias);
+      const normalizedAlias=alias.toLowerCase();
+      if(routes.has(normalizedAlias)) fail(`${entry.sourcePath}: alias collision ${alias}.`);
+      routes.add(normalizedAlias);
     }
     const refs=references(entry.body).result;
     if(typeof entry.data.canvas==='string')refs.push({url:entry.data.canvas,canvas:true,sidecar:true});
@@ -194,8 +211,10 @@ export function validate(root = process.cwd()) {
       if(/^(?:javascript|data|vbscript):/i.test(url)) {fail(`${entry.sourcePath}: unsupported URL scheme ${url.split(':')[0]}.`);continue;}
       if(/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/i.test(url)) continue;
       if(url.startsWith('/')) {
-        const clean=url.split(/[?#]/)[0]; const unbased=site.base!=='/'&&clean.startsWith(site.base)?'/'+clean.slice(site.base.length):clean;
-        const target=byRoute.get(unbased.endsWith('/')?unbased:`${unbased}/`);
+        const clean=url.split(/[?#]/)[0];
+        const unbased=site.base!=='/'&&clean.startsWith(site.base)?'/'+clean.slice(site.base.length):clean;
+        const canonicalRoute=normalizeRoute(unbased.endsWith('/')?unbased:`${unbased}/`,byRoute);
+        const target=canonicalRoute?byRoute.get(canonicalRoute.toLowerCase()):undefined;
         if(!entry.draft&&target?.draft) fail(`${entry.sourcePath}: public content links to draft ${target.sourcePath}.`);
         continue;
       }

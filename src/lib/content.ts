@@ -8,7 +8,7 @@ site.base=normalizeBase(import.meta.env.SITE_BASE||site.base);
 site.url=import.meta.env.SITE_URL||site.url;
 export const taxonomy=parse(taxonomyRaw);
 export const url=(path:string)=>withBase(path,site.base);
-export const entryUrl=(entry:any)=>url(`/${PREFIX[entry.data.type as keyof typeof PREFIX]}/${entry.id}/`);
+export const entryUrl=(entry:any)=>url(`/${PREFIX[entry.data.type as keyof typeof PREFIX]}/${String(entry.id).toLowerCase()}/`);
 export const typeLabel=(type:string)=>LABELS[type as keyof typeof LABELS];
 export const formatDate=(value?:string)=>value?new Intl.DateTimeFormat('en',{month:'short',day:'numeric',timeZone:'UTC'}).format(new Date(`${value}T12:00:00Z`)):'Draft';
 export const topicLabel=(id:string)=>taxonomy.topics[id]?.label||id;

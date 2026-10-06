@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { getSources, normalizeBase, parseMarkdown, references, today, validate, withBase, processor } from '../src/lib/model.mjs';
+import { getSources, normalizeBase, normalizeRoute, parseMarkdown, references, today, validate, withBase, processor } from '../src/lib/model.mjs';
 import { prepare } from '../scripts/prepare.mjs';
 import { createEntry } from '../scripts/content-ops.mjs';
 
@@ -14,6 +14,13 @@ test('base paths stay correct for user and project pages',()=>{
   assert.equal(normalizeBase('notes-site'),'/notes-site/');
   assert.equal(withBase('/notes/example/','/notes-site/'),'/notes-site/notes/example/');
   assert.equal(withBase('/notes-site/notes/example/','/notes-site/'),'/notes-site/notes/example/');
+});
+
+test('public routes compare case-insensitively while keeping canonical lowercase URLs',()=>{
+  const canonical='/write-ups/insanityhosting/';
+  assert.equal(normalizeRoute('/write-ups/InsanityHosting/',new Map([[canonical,true]])),canonical);
+  assert.equal(normalizeRoute('/WRITE-UPS/INSANITYHOSTING/',new Map([[canonical,true]])),canonical);
+  assert.equal(normalizeRoute('/write-ups/unknown/',new Map([[canonical,true]])),undefined);
 });
 
 test('content model discovers write-ups from per-entry index files',()=>{
