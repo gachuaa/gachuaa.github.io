@@ -344,4 +344,5 @@ body.note-mode:not(.sidebar-collapsible) .primary-sidebar,:root[data-theme=dark]
 :root[data-theme=dark] .primary-sidebar .nav-link.active,:root[data-theme=dark] .primary-sidebar .nav-link.active svg{color:#fff}
 .topic-results .topic-results-heading .type-tabs{margin:0 0 .5rem}
 .accordion[data-archive-year]{border-bottom:0}
+@media(max-width:850px){.mobile-menu{width:2.2rem;height:2.2rem;min-width:2.2rem;min-height:2.2rem;padding:0;border:1px solid color-mix(in srgb,var(--line) 80%,transparent);border-radius:.5rem;background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--muted)}.back-button{margin-left:0}}
 
