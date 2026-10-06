@@ -12,10 +12,12 @@ publishedAt: 2026-10-06
 # Lab Info
 
 
-<img src="../../../assets/memes/meta.png" alt="gitroot" width="600">
+<img src="../../assets/memes/meta.png" alt="insanityhosting" width="600">
 
 | Name            | Os    | Difficulty |
 | --------------- | ----- | ---------- |
 | InsanityHosting | Linux | Advance    |
 
 - View the investigation board in the [InsanityHosting Canvas](/write-ups/insanityhosting/#canvas)
+
+# Upload Tonight
