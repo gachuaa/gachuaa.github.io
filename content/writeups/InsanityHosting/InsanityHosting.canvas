@@ -23,11 +23,6 @@
 		{"id":"183cbb4143dedcac","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006141104.png","x":860,"y":1940,"width":851,"height":310},
 		{"id":"7989d32e33ccc1ca","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140826.png","x":6440,"y":1800,"width":1165,"height":364},
 		{"id":"34acb9abf3024a76","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140003.png","x":5740,"y":-1177,"width":480,"height":255},
-		{"id":"de79ac5cd0008dd0","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140756.png","x":10720,"y":285,"width":1132,"height":177},
-		{"id":"9bdc70e2a948eaa3","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140650.png","x":9300,"y":382,"width":400,"height":193},
-		{"id":"76ea5410d4b98803","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140536.png","x":8620,"y":326,"width":400,"height":272},
-		{"id":"5bd92bda6dfc7605","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140724.png","x":9420,"y":-502,"width":400,"height":215},
-		{"id":"bce0d97405124b8f","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140523.png","x":8820,"y":-502,"width":399,"height":185},
 		{"id":"ea9c29413321b3e1","type":"text","text":"# output like db\noutput show like a database\n\n\n| id  | host | date | time | status |\n| --- | ---- | ---- | ---- | ------ |\n|     |      |      |      |        |\n- we can try sqli","x":5740,"y":-1820,"width":431,"height":240},
 		{"id":"6bd6c73aa498ef50","type":"text","text":"# sqli\n- we can inject sql payloads in name\n- `\"or 1=1-- -` show all columns of details\n- then tried , `order by` & `union all` : `union all 1,2,3,4` show results so confirm 4 columns\n- then exploit db to find database name, tables, columsn and details","x":5480,"y":-370,"width":800,"height":230},
 		{"id":"cb36a71b0cb5d460","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006141024.png","x":2520,"y":1960,"width":1129,"height":278},
@@ -35,6 +30,11 @@
 		{"id":"ed07946403bcb54e","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140432.png","x":7940,"y":382,"width":399,"height":216},
 		{"id":"3ce209a9dbbbef9c","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140225.png","x":7340,"y":-645,"width":400,"height":328},
 		{"id":"0f0412e20abdf19b","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140416.png","x":8100,"y":-588,"width":400,"height":214},
+		{"id":"de79ac5cd0008dd0","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140756.png","x":10720,"y":285,"width":1132,"height":177},
+		{"id":"9bdc70e2a948eaa3","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140650.png","x":9300,"y":382,"width":400,"height":193},
+		{"id":"76ea5410d4b98803","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140536.png","x":8620,"y":326,"width":400,"height":272},
+		{"id":"5bd92bda6dfc7605","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140724.png","x":9420,"y":-502,"width":400,"height":215},
+		{"id":"bce0d97405124b8f","type":"file","file":"writeups/InsanityHosting/assets/Pasted image 20261006140523.png","x":8820,"y":-502,"width":399,"height":185},
 		{"id":"8c637239b9332145","type":"text","text":"# these user, pass are useless\n- can't decrypt password","x":8840,"y":-1040,"width":400,"height":120}
 	],
 	"edges":[
