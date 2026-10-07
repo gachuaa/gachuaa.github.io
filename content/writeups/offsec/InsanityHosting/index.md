@@ -89,9 +89,14 @@ But nothing there <img src="../../../assets/memes/wallet.gif" alt="cat cry" widt
 ![](assets/Pasted%20image%2020261006224043.png)
 
 ## Fuzzing
+
+```bash
+ffuf -u "http://192.168.241.124/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt
+```
+
 ```bash
 ┌──(kali㉿kali)-[~/.mozilla]
-└─$ ffuf -u "http://192.168.241.124/FUZZ" -w /usr/share/seclists/Discovery/Web-
+└─$ ffuf -u "http://192.168.241.124/FUZZ" -w /usr/share/seclists/Discovery/Web-Content/raft-medium-directories.txt 
 img                     [Status: 301, Size: 235, Words: 14, Lines: 8, Duration: 77ms]
 data                    [Status: 301, Size: 236, Words: 14, Lines: 8, Duration: 79ms]
 news                    [Status: 301, Size: 236, Words: 14, Lines: 8, Duration: 79ms]
@@ -198,7 +203,7 @@ then time to do sql injections
 
 ### Finding injection payload
 - i tried common payload `'or 1=1-- -` in name field, but after looking its result in mail it use **double-quotes** 
-![](assets/Pasted%20image%2020261007112849.png)
+![](assets/firstpay.png)
 
 - so next i tried double-quotes `"or 1=1-- -` & we got all rows from table & system name in name table (localhost) : so there is `SQLI`
 ![](assets/Pasted%20image%2020261007113103.png)
@@ -216,7 +221,7 @@ then time to do sql injections
 	- add server entry
 		![](assets/Pasted%20image%2020261007113830.png)
 	- result
-		![](assets/Pasted%20image%2020261007113735.png)
+		![](assets/union.png)
 
 
 2.  Find tables in db `monitoring` , `mysql`
@@ -236,12 +241,12 @@ then time to do sql injections
 4. got some user, pass in `monitoring.users`
 	`"union all select username,password,3,4 from monitoring.users-- -`
 	
-	![](assets/Pasted%20image%2020261007115223.png)
+	![](assets/monitoring.png)
 
 	- these are useless
 
-4. again got some user,pass in `mysql.user`
-	![](assets/Pasted%20image%2020261007121047.png)
+5. again got some user,pass in `mysql.user`
+	![](assets/mysql.png)
 
 - `root` one is useless, but we got another user `elliot` but no password for him
 
@@ -249,7 +254,7 @@ then time to do sql injections
 
 	`"union all select User,authentication_string,3,4 from mysql.user-- -`
 
-	![](assets/Pasted%20image%2020261007121434.png)
+	![](assets/eldb.png)
 
 - found `elliot` password hash `5A5749F309CAC33B27BA94EE02168FA3C3E7A3E9`
 
@@ -264,7 +269,7 @@ then time to do sql injections
 # initial shell (elliot)
 
 - `elliot:elliot123` worked on ssh
-- 
+
 ![](assets/Pasted%20image%2020261007124308.png)
 
 <img src="../../../assets/memes/fat-elliot.jpg" alt="insanityhosting" width="500">
@@ -272,14 +277,14 @@ then time to do sql injections
 ---
 
 Then i tried many things but got nothing
-	- then i got old kernel `3.10` 
+	- it has old kernel `3.10` 
 - but there is no `gcc` to system to compile the exploit 
  <img src="../../../assets/memes/cry_nigga.gif" alt="insanityhosting" width="100">
 
 ---
 
 
-## firefox creds cracking
+## Firefox creds cracking
 
 ![](assets/firefox.png)
 

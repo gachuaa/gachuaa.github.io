@@ -24,6 +24,7 @@
     "chokidar": "5.0.0",
     "github-slugger": "2.0.0",
     "linkedom": "0.18.13",
+    "marked": "^18.1.0",
     "pagefind": "1.5.2",
     "remark-gfm": "4.0.1",
     "remark-parse": "11.0.0",
