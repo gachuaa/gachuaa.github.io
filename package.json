@@ -11,6 +11,7 @@
     "new": "node scripts/content-cli.mjs new",
     "category": "node scripts/content-cli.mjs category",
     "publish:content": "node scripts/content-cli.mjs publish",
+    "export:medium": "node scripts/export-medium.mjs",
     "check": "node scripts/check-content.mjs",
     "prebuild": "node scripts/prepare.mjs",
     "build": "astro build && node scripts/build-search.mjs && node scripts/check-output.mjs",

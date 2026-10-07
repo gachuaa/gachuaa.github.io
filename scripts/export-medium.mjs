@@ -6,19 +6,21 @@ import { getSources, parseMarkdown, readConfig } from '../src/lib/model.mjs';
 import { prepare } from './prepare.mjs';
 
 function containsCanvasLink(node) {
-  if (node.type === 'link' && /#canvas(?:$|[?&])/i.test(node.url || '')) return true;
-  return node.children?.some(containsCanvasLink) || false;
+  if (node.type === 'link' && /#canvas(?:$|[?&])/i.test(node.href || node.url || '')) return true;
+  return node.tokens?.some(containsCanvasLink) || node.items?.some(containsCanvasLink) || false;
 }
 
 function cleanCanvas(tree) {
   function visit(node) {
-    if (!Array.isArray(node.children)) return;
-    node.children = node.children.filter(child =>
-      !(child.type === 'html' && /canvas-board/i.test(child.value || '')) && !containsCanvasLink(child)
-    );
-    node.children.forEach(visit);
+    for (const property of ['tokens', 'items']) {
+      if (!Array.isArray(node[property])) continue;
+      node[property] = node[property].filter(child =>
+        !(child.type === 'html' && /canvas-board/i.test(child.text || child.raw || '')) && !containsCanvasLink(child)
+      );
+      node[property].forEach(visit);
+    }
   }
-  visit(tree);
+  tree.forEach(visit);
 }
 
 function absoluteUrl(value, site) {
@@ -28,15 +30,20 @@ function absoluteUrl(value, site) {
 
 function makeUrlsAbsolute(tree, site) {
   function visit(node) {
-    if (node.type === 'link' || node.type === 'image') node.url = absoluteUrl(node.url, site);
+    if (node.type === 'link' || node.type === 'image') {
+      if (node.href) node.href = absoluteUrl(node.href, site);
+      else node.url = absoluteUrl(node.url, site);
+    }
     if (node.type === 'html') {
-      node.value = node.value.replace(/\b(src|href)\s*=\s*(["'])(.*?)\2/gi, (match, key, quote, value) =>
+      const property = typeof node.text === 'string' ? 'text' : 'value';
+      node[property] = node[property].replace(/\b(src|href)\s*=\s*(["'])(.*?)\2/gi, (match, key, quote, value) =>
         `${key}=${quote}${absoluteUrl(value, site)}${quote}`
       );
     }
-    node.children?.forEach(visit);
+    node.tokens?.forEach(visit);
+    node.items?.forEach(visit);
   }
-  visit(tree);
+  tree.forEach(visit);
 }
 
 function escapeHtml(value) {
@@ -63,7 +70,7 @@ export async function exportMedium(root, sourcePath) {
   cleanCanvas(tree);
   makeUrlsAbsolute(tree, site);
   const article = marked.parser(tree);
-  const canonical = new URL(entry.route, `${site.url}${site.base}`).href;
+  const canonical = new URL(`${site.base}${entry.route.replace(/^\//, '')}`, `${site.url}/`).href;
   const html = `<!doctype html>
 <html lang="en">
 <head>

@@ -11,7 +11,6 @@ draft: false
 publishedAt: 2026-10-07
 difficulty: hard
 os: Linux
-minutes: 10
 aliases: []
 order: 0
 sourceUrl: ""
@@ -184,7 +183,7 @@ Hydra (https://github.com/vanhauser-thc/thc-hydra) starting at 2026-10-06 13:21:
 
 ## Sql Injection
 
-then time to do sql injections
+time to do sql injections
 
 <img src="../../../assets/memes/momma_sqli.gif" alt="insanityhosting" width="300">
 

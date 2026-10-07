@@ -6,6 +6,7 @@ import path from 'node:path';
 import { compareEntriesByOrder, getSources, normalizeBase, normalizeRoute, parseMarkdown, references, today, validate, withBase, processor } from '../src/lib/model.mjs';
 import { prepare } from '../scripts/prepare.mjs';
 import { createEntry } from '../scripts/content-ops.mjs';
+import { exportMedium } from '../scripts/export-medium.mjs';
 
 const root=process.cwd();
 
@@ -124,6 +125,29 @@ test('content preparation publishes Canvas boards and local file nodes',async()=
     const canvas=JSON.parse(fs.readFileSync(publishedCanvas,'utf8'));
     assert.match(canvas.nodes[0].file,/^\/_content\/notes\/board-note\/[a-f0-9]+\.svg$/);
     assert.ok(fs.existsSync(path.join(temp,'public',canvas.nodes[0].file.slice(1))));
+  } finally {
+    fs.rmSync(temp,{recursive:true,force:true});
+  }
+});
+
+test('Medium export keeps hosted media and code while removing Canvas UI',async()=>{
+  const temp=fs.mkdtempSync(path.join(os.tmpdir(),'medium-export-'));
+  try {
+    const entry=path.join(temp,'content/writeups/example');
+    fs.mkdirSync(path.join(entry,'image'),{recursive:true});
+    fs.mkdirSync(path.join(temp,'config'),{recursive:true});
+    fs.writeFileSync(path.join(temp,'config/site.yml'),'name: Test\ndescription: Test\ntagline: Test\nurl: https://example.test\nbase: /\ntimezone: UTC\npageSize: 10\nsocials: {}\nabout: Test\n');
+    fs.writeFileSync(path.join(temp,'config/taxonomy.yml'),'topics:\n  security:\n    label: Security\nplatforms:\n  offsec:\n    label: OffSec\n');
+    fs.writeFileSync(path.join(entry,'index.md'),'---\ntitle: Example Write-up\ndescription: Test export.\nslug: example\ndraft: false\npublishedAt: 2026-09-30\ntopics: [security]\nplatform: offsec\n---\n\n# Lab Info\n\n[View Canvas](/write-ups/example/#canvas)\n\n![Proof](./image/proof.svg)\n\n```bash\nid\n```\n');
+    fs.writeFileSync(path.join(entry,'image/proof.svg'),'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>');
+
+    const output=await exportMedium(temp,'content/writeups/example/index.md');
+    const html=fs.readFileSync(output,'utf8');
+    assert.match(html,/<title>Example Write-up - Medium export<\/title>/);
+    assert.match(html,/src="https:\/\/example\.test\/_content\/writeups\/example\/[a-f0-9]+\.svg"/);
+    assert.match(html,/<code class="language-bash">id/);
+    assert.doesNotMatch(html,/View Canvas|canvas-board/);
+    assert.match(html,/rel="canonical"|canonical-url/);
   } finally {
     fs.rmSync(temp,{recursive:true,force:true});
   }

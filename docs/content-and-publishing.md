@@ -198,6 +198,16 @@ npm run build
 
 The build validates content, creates the static site and search data, and checks the hosting output. The generated `dist/` folder is the deployable site; do not edit it by hand. If there are no published entries, Pagefind is skipped and the site still builds with empty states.
 
+## Export a write-up for Medium
+
+Publish the write-up on your site first so its images have public URLs, then generate a clean HTML copy from the same Markdown source:
+
+```bash
+npm run export:medium -- content/writeups/offsec/InsanityHosting/index.md
+```
+
+The exporter writes `exports/medium/insanityhosting.html`. Open it in a browser, copy the rendered article body, and paste it into a new Medium story. Set the Medium story title from the write-up frontmatter and, if desired, set its canonical URL to the original page. Canvas links and embeds are omitted; article images point to the versions already hosted by the site. Generated exports are ignored by Git.
+
 ## Configure the site
 
 Edit `config/site.yml`:

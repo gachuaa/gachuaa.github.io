@@ -11,7 +11,6 @@ draft: false
 publishedAt: 2026-10-02
 difficulty: hard
 os: Linux
-minutes: 10
 aliases: []
 order: 0
 sourceUrl: ""
