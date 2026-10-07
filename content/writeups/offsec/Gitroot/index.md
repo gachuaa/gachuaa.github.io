@@ -4,10 +4,17 @@ description: OffSec lab write-up covering virtual-host discovery, exposed Git hi
 slug: gitroot
 topics:
   - linux
+  - offsec
 platform: offsec
 canvas: gitroot.canvas
 draft: false
 publishedAt: 2026-10-02
+difficulty: hard
+os: Linux
+minutes: 10
+aliases: []
+order: 0
+sourceUrl: ""
 ---
  
 

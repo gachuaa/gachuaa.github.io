@@ -277,10 +277,12 @@ function refreshCollections(scope = document) {
 function applyFilters(scope) {
   const type = scope.querySelector('[data-type-filter][aria-pressed="true"]')?.dataset.typeFilter || 'all';
   const topic = scope.querySelector('[data-topic-filter][aria-pressed="true"]')?.dataset.topicFilter || '';
+  const difficulty = scope.querySelector('[data-writeup-difficulty-option][aria-pressed="true"]')?.dataset.writeupDifficultyOption || '';
   scope.querySelectorAll('.filter-row').forEach((row) => {
     const typeMatch = type === 'all' || row.dataset.type === type;
     const topicMatch = !topic || (row.dataset.topics || '').split(' ').includes(topic);
-    row.dataset.filtered = String(!(typeMatch && topicMatch));
+    const difficultyMatch = !difficulty || (row.dataset.difficulty || '').toLowerCase() === difficulty;
+    row.dataset.filtered = String(!(typeMatch && topicMatch && difficultyMatch));
   });
   refreshCollections(scope);
 }
@@ -292,6 +294,15 @@ document.querySelectorAll('[data-filter-scope]').forEach((scope) => {
       scope.querySelectorAll(kind === 'type' ? '[data-type-filter]' : '[data-topic-filter]').forEach((item) => item.setAttribute('aria-pressed', 'false'));
       button.setAttribute('aria-pressed', 'true');
       applyFilters(scope);
+    });
+  });
+  scope.querySelectorAll('[data-writeup-difficulty-option]').forEach((button) => {
+    button.addEventListener('click', () => {
+      scope.querySelectorAll('[data-writeup-difficulty-option]').forEach((option) => {
+        option.setAttribute('aria-pressed', String(option === button));
+      });
+      applyFilters(scope);
+      scope.querySelector('[data-writeup-filter-menu]')?.removeAttribute('open');
     });
   });
   applyFilters(scope);

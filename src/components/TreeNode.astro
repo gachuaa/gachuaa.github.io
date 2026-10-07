@@ -1,10 +1,11 @@
 ---
 import Icon from './Icon.astro';
 import {entryUrl} from '../lib/content';
+import {compareEntriesByOrder} from '../lib/model.mjs';
 const {node,current='',depth=0}=Astro.props;
 const contains=(item:any):boolean=>item.entries.some((e:any)=>e.id===current)||[...item.children.values()].some((n:any)=>contains(n));
 const children=[...node.children.values()].sort((a:any,b:any)=>a.label.localeCompare(b.label));
-const entries=[...node.entries].sort((a:any,b:any)=>(a.data.order??999)-(b.data.order??999)||a.data.title.localeCompare(b.data.title));
+const entries=[...node.entries].sort(compareEntriesByOrder);
 ---
 <ul class:list={['tree-list',{nested:depth>0}]}>
  {children.map((child:any,index:number)=><li><details open={current?contains(child):depth===0&&index===0}><summary><Icon name="chevron" size={14}/><Icon name="folder" size={18}/><span>{child.label}</span></summary><Astro.self node={child} current={current} depth={depth+1}/></details></li>)}

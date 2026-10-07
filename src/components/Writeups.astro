@@ -1,15 +1,28 @@
 ---
 import Collection from './Collection.astro';
+import Icon from './Icon.astro';
 import {taxonomy,url} from '../lib/content';
 const {entries,all,platformId,platformLabel}=Astro.props;
 const allWriteups=all.filter((e:any)=>e.data.type==='writeups');
 const platforms=Object.entries(taxonomy.platforms).filter(([id])=>allWriteups.some((e:any)=>e.data.platform===id));
 ---
 <div class="page writeups-page" data-filter-scope>
- <nav class="writeup-platform-tabs" aria-label="Write-up platforms">
-  <a href={url('/write-ups/')} aria-current={!platformId?'page':undefined}>All <small>{allWriteups.length}</small></a>
-  {platforms.map(([id,platform]:any)=><a href={url(`/write-ups/platform/${id}/`)} aria-current={id===platformId?'page':undefined}>{platform.label}<small>{allWriteups.filter((entry:any)=>entry.data.platform===id).length}</small></a>)}
- </nav>
+ <div class="writeup-filter-toolbar">
+  <nav class="writeup-platform-tabs" aria-label="Write-up platforms">
+   <a href={url('/write-ups/')} aria-current={!platformId?'page':undefined}>All <small>{allWriteups.length}</small></a>
+   {platforms.map(([id,platform]:any)=><a href={url(`/write-ups/platform/${id}/`)} aria-current={id===platformId?'page':undefined}>{platform.label}<small>{allWriteups.filter((entry:any)=>entry.data.platform===id).length}</small></a>)}
+  </nav>
+  <details class="writeup-filter" data-writeup-filter-menu>
+   <summary class="button"><Icon name="tag" size={16}/>Difficulty</summary>
+   <div class="writeup-filter-panel" role="group" aria-label="Difficulty options">
+    <button class="writeup-filter-option" type="button" data-writeup-difficulty-option="" aria-pressed="true">Any difficulty</button>
+    <button class="writeup-filter-option" type="button" data-writeup-difficulty-option="easy" aria-pressed="false">Easy</button>
+    <button class="writeup-filter-option" type="button" data-writeup-difficulty-option="medium" aria-pressed="false">Medium</button>
+    <button class="writeup-filter-option" type="button" data-writeup-difficulty-option="hard" aria-pressed="false">Hard</button>
+    <button class="writeup-filter-option" type="button" data-writeup-difficulty-option="insane" aria-pressed="false">Insane</button>
+   </div>
+  </details>
+ </div>
  <Collection entries={entries} limit={entries.length||1} paginate={false} showUpdated metaAtBottom/>
  {!entries.length&&<p class="empty-state">Published write-ups will appear here.</p>}
 </div>

@@ -58,7 +58,7 @@ export async function prepare(root=process.cwd(),dev=false) {
       if(ref.replaceUrl)ref.replaceUrl(assetUrl);
       else ref.node.url=assetUrl;
     }
-    const meta={...entry.data,canvasUrl,draft:entry.draft,type:entry.type,sourcePath:entry.sourcePath,sourceUrl:withBase(`/_source/${entry.type}/${entry.data.slug}.md`,site.base),folders:entry.folders,folderLabels:entry.folderLabels,platform:entry.platform||'',minutes:Math.max(1,Math.ceil(entry.body.split(/\s+/).length/220))};
+    const meta={...entry.data,canvasUrl,draft:entry.draft,type:entry.type,sourcePath:entry.sourcePath,sourceUrl:withBase(`/_source/${entry.type}/${entry.data.slug}.md`,site.base),folders:entry.folders,folderLabels:entry.folderLabels,platform:entry.platform||'',minutes:entry.data.minutes??Math.max(1,Math.ceil(entry.body.split(/\s+/).length/220))};
     const dest=path.join(generated,entry.type,`${entry.data.slug}.md`);
     const preparedMarkdown=markdownText(meta,processor.stringify(tree));
     writeChanged(dest,preparedMarkdown);keep.add(dest);

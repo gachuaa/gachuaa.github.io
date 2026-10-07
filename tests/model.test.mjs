@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { getSources, normalizeBase, normalizeRoute, parseMarkdown, references, today, validate, withBase, processor } from '../src/lib/model.mjs';
+import { compareEntriesByOrder, getSources, normalizeBase, normalizeRoute, parseMarkdown, references, today, validate, withBase, processor } from '../src/lib/model.mjs';
 import { prepare } from '../scripts/prepare.mjs';
 import { createEntry } from '../scripts/content-ops.mjs';
 
@@ -30,16 +30,29 @@ test('content model discovers write-ups from per-entry index files',()=>{
     fs.mkdirSync(path.join(temp,'content/writeups/example-writeup'),{recursive:true});
     fs.writeFileSync(path.join(temp,'config/site.yml'),'name: Test\nurl: https://example.test\nbase: /\npageSize: 10\ntimezone: UTC\n');
     fs.writeFileSync(path.join(temp,'config/taxonomy.yml'),'topics: {}\nplatforms:\n  offsec:\n    label: OffSec\n');
-    fs.writeFileSync(path.join(temp,'content/writeups/example-writeup/index.md'),'---\ntitle: Example Write-up\nslug: example-writeup\ndraft: true\nplatform: offsec\n---\n\nExample content.\n');
+    fs.writeFileSync(path.join(temp,'content/writeups/example-writeup/index.md'),'---\ntitle: Example Write-up\nslug: example-writeup\ndraft: true\nplatform: offsec\ndifficulty: HaRd\norder: 0\n---\n\nExample content.\n');
 
     const result=validate(temp),entry=result.entries.find(item=>item.data.slug==='example-writeup');
     assert.ok(entry);
     assert.equal(entry.platform,'offsec');
     assert.equal(entry.draft,true);
     assert.equal(entry.sourcePath,'content/writeups/example-writeup/index.md');
+    assert.equal(entry.data.difficulty,'hard');
+    assert.equal(entry.data.order,0);
   } finally {
     fs.rmSync(temp,{recursive:true,force:true});
   }
+});
+
+test('zero order disables explicit ordering and falls back to title',()=>{
+  const entries=[
+    {data:{title:'Zulu',order:0}},
+    {data:{title:'Alpha'}},
+    {data:{title:'First',order:1}},
+    {data:{title:'Beta',order:0}}
+  ];
+  entries.sort(compareEntriesByOrder);
+  assert.deepEqual(entries.map(entry=>entry.data.title),['First','Alpha','Beta','Zulu']);
 });
 
 test('Obsidian canvas embeds become local attachment references',()=>{
@@ -95,7 +108,7 @@ test('content preparation publishes Canvas boards and local file nodes',async()=
     fs.mkdirSync(path.join(temp,'config'),{recursive:true});
     fs.writeFileSync(path.join(temp,'config/site.yml'),'name: Test\ndescription: Test\ntagline: Test\nurl: https://example.test\nbase: /\ntimezone: UTC\npageSize: 10\nsocials: {}\nabout: Test\n');
     fs.writeFileSync(path.join(temp,'config/taxonomy.yml'),'topics:\n  security:\n    label: Security\nplatforms: {}\n');
-    fs.writeFileSync(path.join(entry,'index.md'),'---\ntitle: Board note\ndescription: A Canvas note.\nslug: board-note\ndraft: false\npublishedAt: 2026-09-30\ntopics: [security]\ncanvas: board.canvas\n---\n\nMarkdown body for the entry.\n');
+    fs.writeFileSync(path.join(entry,'index.md'),'---\ntitle: Board note\ndescription: A Canvas note.\nslug: board-note\ndraft: false\npublishedAt: 2026-09-30\ntopics: [security]\nminutes: 10\ncanvas: board.canvas\n---\n\nMarkdown body for the entry.\n');
     fs.writeFileSync(path.join(entry,'board.canvas'),JSON.stringify({nodes:[{id:'image',type:'file',file:'notes/board-note/images/shot.svg',x:0,y:0,width:300,height:180}],edges:[]}));
     fs.writeFileSync(path.join(entry,'image/shot.svg'),'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>');
 
@@ -103,6 +116,7 @@ test('content preparation publishes Canvas boards and local file nodes',async()=
     const generated=fs.readFileSync(path.join(temp,'.generated/content/notes/board-note.md'),'utf8');
     const {data:generatedData,body:generatedBody}=parseMarkdown(generated);
     const canvasUrl=generatedData.canvasUrl;
+    assert.equal(generatedData.minutes,10);
     assert.ok(canvasUrl);
     assert.match(generatedBody,/Markdown body for the entry/);
     assert.doesNotMatch(generatedBody,/canvas-board/);

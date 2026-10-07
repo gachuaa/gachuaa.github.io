@@ -14,6 +14,10 @@ export const LABELS = { notes: 'Note', writeups: 'Write-up', articles: 'Article'
 export const slugify = value => String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 export const validId = value => typeof value === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
 export const pretty = value => value.split('-').map(x => x.charAt(0).toUpperCase() + x.slice(1)).join(' ');
+export function compareEntriesByOrder(a,b) {
+  const order=value=>Number.isFinite(value.data.order)&&value.data.order>0?value.data.order:Number.POSITIVE_INFINITY;
+  return order(a)-order(b)||a.data.title.localeCompare(b.data.title);
+}
 export const normalizeBase = value => value && value !== '/' ? `/${value.replace(/^\/+|\/+$/g, '')}/` : '/';
 export function normalizeRoute(value, routes) {
   const path = String(value).replace(/^\/+|\/+$/g, '');
@@ -77,6 +81,7 @@ export function getSources(root = process.cwd()) {
     const base = path.join(root,'content',type);
     for (const file of walk(base).filter(f=>path.basename(f)==='index.md')) {
       const {data,body} = parseMarkdown(fs.readFileSync(file,'utf8'), path.relative(root,file));
+      if(typeof data.difficulty==='string') data.difficulty=data.difficulty.toLowerCase();
       const parts = path.relative(base,path.dirname(file)).split(path.sep);
       const folders = parts.slice(0,-1);
       const folderLabels = folders.map((id,i) => {
